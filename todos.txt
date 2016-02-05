@@ -1,0 +1,33 @@
+So what are my todos?
+==================================================================================
+HTTP endpoint to list processes.
+HTTP endpoint to start/shutdown/restart process.
+HTTP endpoint to retrieve memory usage stats for group:name.
+==================================================================================
+Websocket api endpoint to retrieve memory usage stats.
+Websocket api endpoint to update process status.
+==================================================================================
+What should I do when the user changes group and / or name of running application?
+At this point, keep the data around for renamed processes. Don't worry about the
+extra space used up or renaming processes to get historical data. If the user
+renames their process, the data just gets lost. There should also be a csv data
+dump option.
+
+Config file options:
+INCLUDE_SELF=False		# Include SupervisorController in the list of running apps.
+						# managed by supervisor (iff supervisor is responsible for 
+						# running the application).
+TICK=60					# How often to take a memory snapshot (in seconds).
+DATA_AGE=30				# How long to retain data in Whisper database. Age is in days.
+DUMP_DATA=True			# Dump data after it reaches a certain age. 
+DATA_FORMAT=csv			# Dump data to a comma separated values text file. Other formats?
+						# Perhaps other format could be Whisper? So once the database fills
+						# up, it's copied into the data directory.
+
+
+$CWD/remotectrl.conf
+$CWD/etc/remotectrl.conf
+/etc/remotectrl/remotectrl.conf
+
+Create sample supervisord and ngnix files for running and hosting the application.
+
