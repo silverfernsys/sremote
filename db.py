@@ -71,6 +71,16 @@ class Db():
         cur.execute('SELECT * FROM user WHERE username=?', t)
         return cur.fetchone()
 
+    def authenticate_user(self, username, password):
+        user = self.get_user(username)
+        if user:
+            if password == user[2]:
+                return True
+            else:
+                return False
+        else:
+            return False
+
     def user_exists(self, username):
         t = (username,)
         cur = self.conn.cursor()
@@ -167,10 +177,6 @@ class DbTest(unittest.TestCase):
         self.assertEqual(Db.instance().create_token('info@example.com'), False, 'token already exists')
         self.assertEqual(Db.instance().get_token('info@example.com'), Db.instance().get_token('info@example.com'), 'tokens are equal')
         self.assertEqual(Db.instance().token_count(), 1, '1 token')
-        
-        # for row in Db.instance().list_tokens():
-        #     print(row)
-
         self.assertEqual(Db.instance().delete_token('info@example.com'), True, 'deleted token')
         self.assertEqual(Db.instance().delete_token('info@example.com'), False, 'no token to delete')
         self.assertEqual(Db.instance().token_count(), 0, '0 tokens')

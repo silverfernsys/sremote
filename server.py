@@ -11,7 +11,7 @@ import logging
 import signal
 import json
 import os
-import db
+from db import Db
 from connect import server
 # from eventserver import EventServer
 from procinfo import ProcInfo
@@ -23,7 +23,6 @@ class SendUpdates():
     version = 0.0
 
     def __init__(self, config):
-        print("SendUpdates.__init__")
         self.update_interval = config.getint('sremote', 'tick')
         self.push_interval = config.getint('sremote', 'send_update_tick')
         self.xmlrpc = server()
@@ -198,13 +197,14 @@ class HTTPStatusHandler(tornado.web.RequestHandler):
 class HTTPTokenHandler(tornado.web.RequestHandler):
     @tornado.web.addslash
     def post(self):
-        print('HTTPTokenHandler')
         username = self.request.headers.get('username')
         password = self.request.headers.get('password')
-
-        # print('HTTPTokenHandler: %s' % self.request.headers.get('username'))
-        # print('HTTPTokenHandler: %s' % self.request.headers.get('password'))
-        data = {'token': 'ASDFHREWLQWEKFKEQLWKEFNEKWLQKFN'}
+        if Db.instance().authenticate_user(username, password):
+            Db.instance().create_token(username)
+            token = Db.instance().get_token(username)
+            data = {'token': token}
+        else:
+            data = {'error': 'invalid username/password'}
         self.set_header('Content-Type', 'application/json')
         self.write(json.dumps(data))
 
@@ -226,6 +226,7 @@ class Server():
         ])
 
         send_updates = SendUpdates(config)
+        Db.instance(os.path.join(os.path.expanduser(config.get('sremote', 'database_dir')), 'db.sqlite'))
         # event_server = EventServer(threaded=True)
         port = self.config.getint('sremote', 'port_number')
         server = tornado.httpserver.HTTPServer(application)
