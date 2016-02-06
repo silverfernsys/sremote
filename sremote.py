@@ -150,12 +150,9 @@ def listusers(args):
     sys.exit(0)
 
 def runserver(args):
-    try:
-        print(args.config)
-        config_dir = args.config or make_config()
-        # https://docs.python.org/2/library/configparser.html
-        config = ConfigParser.ConfigParser()
-        config.read(config_dir)
+    # This function combines the configuration data found in config with that
+    # found in args. Those found in args overwrite those found in config.
+    def resolve_config(args, config):
         tick = config.getint('sremote', 'tick')
         send_update_tick = config.getint('sremote', 'send_update_tick')
         port_number = config.getint('sremote', 'port_number')
@@ -163,16 +160,6 @@ def runserver(args):
         log_level = config.get('sremote', 'log_level')
         log_path = os.path.expanduser(config.get('sremote', 'log_file'))
         database_dir = os.path.expanduser(config.get('sremote', 'database_dir'))
-
-        print('tick: %s' % tick)
-        print('send_update_tick: %s' % send_update_tick)
-        print('port_number: %s' % port_number)
-        print('daemonize: %s' % daemonize)
-        print('log_level: %s' % log_level)
-        print('log_path: %s' % log_path)
-        print('database_dir: %s' % database_dir)
-
-        # Parse log level
         if args.log:
             try:
                 level = getattr(logging, args.log.upper())
@@ -183,13 +170,22 @@ def runserver(args):
                 level = getattr(logging, log_level)
             except:
                 level = logging.DEBUG
+        log_path = args.logfile or log_path
+        daemonize = args.d or daemonize
+        return (tick, send_update_tick, port_number,
+            daemonize, log_level, level, log_path, database_dir)
 
-        filename = args.logfile or log_path
-        logging.basicConfig(filename=filename, format='%(asctime)s::%(levelname)s::%(name)s::%(message)s', level=level)
+    try:
+        # https://docs.python.org/2/library/configparser.html
+        config_dir = args.config or make_config()
+        config = ConfigParser.ConfigParser()
+        config.read(config_dir)
+        (tick, send_update_tick, port_number,
+            daemonize, log_level, level, log_path, database_dir) = resolve_config(args, config)
+        
+        logging.basicConfig(filename=log_path, format='%(asctime)s::%(levelname)s::%(name)s::%(message)s', level=level)
         logger = logging.getLogger('SupervisorRemote')
         logger.info('Loading configuration from %s' % config_dir)
-
-        daemonize = args.d or daemonize
 
         if daemonize:
             logger.info("Daemonizing SRemote.")

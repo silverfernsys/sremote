@@ -194,6 +194,15 @@ class HTTPStatusHandler(tornado.web.RequestHandler):
         self.set_header('Content-Type', 'application/json')
         self.write(json.dumps(data))
 
+class HTTPTokenHandler(tornado.web.RequestHandler):
+    @tornado.web.addslash
+    def post(self):
+        print('HTTPTokenHandler')
+        print('HTTPTokenHandler: %s' % self.request.headers.get('username'))
+        print('HTTPTokenHandler: %s' % self.request.headers.get('password'))
+        data = {'token': 'ASDFHREWLQWEKFKEQLWKEFNEKWLQKFN'}
+        self.set_header('Content-Type', 'application/json')
+        self.write(json.dumps(data))
 
 class Server():
     # Adapted from code found at https://gist.github.com/mywaiting/4643396
@@ -206,8 +215,9 @@ class Server():
         self.logger = logging.getLogger('Web Server')
 
         application = tornado.web.Application([
-            (r"/", HTTPHandler),
+            (r'/', HTTPHandler),
             (r'/status/', HTTPStatusHandler),
+            (r'/token/', HTTPTokenHandler),
             (r'/ws', WSHandler),
         ])
 
@@ -226,13 +236,9 @@ class Server():
     def shutdown(self):
         self.logger.info('Stopping HTTP Server.')
         self.server.stop()
-
         seconds = self.config.getint('sremote', 'max_wait_seconds_before_shutdown')
-
         self.logger.info('Will shutdown in %s seconds...', seconds)
-
         io_loop = tornado.ioloop.IOLoop.instance()
-
         deadline = time.time() + seconds
 
         def stop_loop():
