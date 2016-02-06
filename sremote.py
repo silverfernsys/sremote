@@ -139,6 +139,93 @@ def listusers(args):
         sys.exit('Could not load configuration file. Exiting.')
     sys.exit(0)
 
+def listtokens(args):
+    try:
+        config_dir = args.config or make_config()
+        config = ConfigParser.ConfigParser()
+        config.read(config_dir)
+        database_dir = os.path.expanduser(config.get('sremote', 'database_dir'))
+        try:
+            Db.instance(os.path.join(database_dir, 'db.sqlite'))
+            print("%s%sCreated" % ("Username".ljust(40), "Token".ljust(42)))
+            # https://docs.python.org/2/library/datetime.html#strftime-strptime-behavior
+            for row in Db.instance().list_tokens():
+                print("%s%s%s" % (row[0].ljust(40), row[1].ljust(42), datetime.fromtimestamp(row[2]).strftime('%d-%m-%Y %H:%M:%S')))
+        except Exception as e:
+            print("Exception connecting to sqlite database: %s " % e)
+    except IOError as e:
+        sys.stderr.write(e.message)
+        sys.exit('Could not load configuration file. Exiting.')
+    sys.exit(0)
+
+def createtoken(args):
+    try:
+        config_dir = args.config or make_config()
+        config = ConfigParser.ConfigParser()
+        config.read(config_dir)
+        database_dir = os.path.expanduser(config.get('sremote', 'database_dir'))
+        try:
+            Db.instance(os.path.join(database_dir, 'db.sqlite'))
+            print('Delete token: please authenticate...')
+            
+            while True:
+                admin_username = raw_input('Enter admin username: ')
+                admin_password = getpass('Enter admin password: ')
+                row = Db.instance().get_user(admin_username)
+                if row[3] != 1:
+                    print('Please sign in using administrator credentials.')
+                elif admin_password != row[2]:
+                    print("Username/password don't match.")
+                else:
+                    break
+
+            username = raw_input('Enter username to create a token for: ')
+
+            if Db.instance().create_token(username):
+                print('Created token belonging for %s.' % username)
+            else:
+                sys.exit('A token already exists for %s. Doing nothing.' % username)
+        except Exception as e:
+            print("Exception connecting to sqlite database: %s " % e)
+    except IOError as e:
+        sys.stderr.write(e.message)
+        sys.exit('Could not load configuration file. Exiting.')
+    sys.exit(0)
+
+def deletetoken(args):
+    try:
+        config_dir = args.config or make_config()
+        config = ConfigParser.ConfigParser()
+        config.read(config_dir)
+        database_dir = os.path.expanduser(config.get('sremote', 'database_dir'))
+        try:
+            Db.instance(os.path.join(database_dir, 'db.sqlite'))
+            print('Delete token: please authenticate...')
+            
+            while True:
+                admin_username = raw_input('Enter admin username: ')
+                admin_password = getpass('Enter admin password: ')
+                row = Db.instance().get_user(admin_username)
+                if row[3] != 1:
+                    print('Please sign in using administrator credentials.')
+                elif admin_password != row[2]:
+                    print("Username/password don't match.")
+                else:
+                    break
+
+            username = raw_input('Enter username for token to delete: ')
+
+            if Db.instance().delete_token(username):
+                print('Deleted token belonging to %s.' % username)
+            else:
+                sys.exit('%s has no tokens to delete.' % username)
+        except Exception as e:
+            print("Exception connecting to sqlite database: %s " % e)
+    except IOError as e:
+        sys.stderr.write(e.message)
+        sys.exit('Could not load configuration file. Exiting.')
+    sys.exit(0)
+
 def runserver(args):
     # This function combines the configuration data found in config with that
     # found in args. Those found in args overwrite those found in config.
@@ -202,6 +289,15 @@ def main():
     parser_listusers = subparsers.add_parser('listusers', help='list existing users')
     parser_listusers.add_argument("--config", help="path to the configuration file.")
     parser_listusers.set_defaults(func=listusers)
+    parser_listtokens = subparsers.add_parser('listtokens', help='list authentication tokens')
+    parser_listtokens.add_argument("--config", help="path to the configuration file.")
+    parser_listtokens.set_defaults(func=listtokens)
+    parser_createtoken = subparsers.add_parser('createtoken', help="create a token")
+    parser_createtoken.add_argument("--config", help="path to the configuration file.")
+    parser_createtoken.set_defaults(func=createtoken)
+    parser_deletetoken = subparsers.add_parser('deletetoken', help="delete a user's token")
+    parser_deletetoken.add_argument("--config", help="path to the configuration file.")
+    parser_deletetoken.set_defaults(func=deletetoken)
     parser_runserver = subparsers.add_parser('runserver', help='run the SupervisorRemote server')
     parser_runserver.set_defaults(func=runserver)
     parser_runserver.add_argument("--config", help="path to the configuration file.")

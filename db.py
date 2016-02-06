@@ -103,6 +103,7 @@ class Db():
         existing_token = self.get_token(username)
         if existing_token is None:
             cur = self.conn.cursor()
+            # https://github.com/tomchristie/django-rest-framework/blob/master/rest_framework/authtoken/models.py
             token = binascii.hexlify(os.urandom(20)).decode()
             user = self.get_user(username)
             values = (None, user[0], token, time.time())
@@ -117,6 +118,13 @@ class Db():
         cur = self.conn.cursor()
         cur.execute('SELECT COUNT(*) FROM token;')
         return cur.fetchone()[0]
+
+    def list_tokens(self):
+        cur = self.conn.cursor()
+        join = """
+        SELECT user.username, token.token, token.created FROM user INNER JOIN token ON token.userid = user.id ORDER BY user.username, token.created;
+        """
+        return cur.execute(join)
 
     # Deletes a token if it exists. Returns true if there was a token to delete.
     # Returns false if there was no token to delete.
@@ -159,6 +167,10 @@ class DbTest(unittest.TestCase):
         self.assertEqual(Db.instance().create_token('info@example.com'), False, 'token already exists')
         self.assertEqual(Db.instance().get_token('info@example.com'), Db.instance().get_token('info@example.com'), 'tokens are equal')
         self.assertEqual(Db.instance().token_count(), 1, '1 token')
+        
+        # for row in Db.instance().list_tokens():
+        #     print(row)
+
         self.assertEqual(Db.instance().delete_token('info@example.com'), True, 'deleted token')
         self.assertEqual(Db.instance().delete_token('info@example.com'), False, 'no token to delete')
         self.assertEqual(Db.instance().token_count(), 0, '0 tokens')
