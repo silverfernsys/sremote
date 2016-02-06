@@ -11,6 +11,7 @@ import logging
 import signal
 import json
 import os
+import db
 from connect import server
 # from eventserver import EventServer
 from procinfo import ProcInfo
@@ -198,8 +199,11 @@ class HTTPTokenHandler(tornado.web.RequestHandler):
     @tornado.web.addslash
     def post(self):
         print('HTTPTokenHandler')
-        print('HTTPTokenHandler: %s' % self.request.headers.get('username'))
-        print('HTTPTokenHandler: %s' % self.request.headers.get('password'))
+        username = self.request.headers.get('username')
+        password = self.request.headers.get('password')
+
+        # print('HTTPTokenHandler: %s' % self.request.headers.get('username'))
+        # print('HTTPTokenHandler: %s' % self.request.headers.get('password'))
         data = {'token': 'ASDFHREWLQWEKFKEQLWKEFNEKWLQKFN'}
         self.set_header('Content-Type', 'application/json')
         self.write(json.dumps(data))

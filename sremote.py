@@ -5,7 +5,8 @@ import time
 import argparse
 import logging
 import os
-import db
+# import db
+from db import Db
 import sys
 from getpass import getpass
 import ConfigParser
@@ -47,14 +48,10 @@ def createuser(args):
         database_dir = os.path.expanduser(config.get('sremote', 'database_dir'))
 
         try:
-            # This will either create a new database if it doesn't exist or read from an existing db if it does exist.
-            conn = db.connect(os.path.join(database_dir, 'db.sqlite'))
-            cur = conn.cursor()
-            db.create_tables(conn, cur)
-
+            Db.instance(os.path.join(database_dir, 'db.sqlite'))
             while True:
                 username = raw_input('Enter email address: ')
-                if db.user_exists(conn, cur, username):
+                if Db.instance().user_exists(username):
                     print('Username already exists. Please pick another username.')
                 else:
                     break
@@ -74,7 +71,7 @@ def createuser(args):
                 else:
                     break
 
-            db.insert_user(conn, cur, username, password_1, admin)
+            Db.instance().insert_user(username, password_1, admin)
             print('Successfully created user %s' % username)
         except Exception as e:
             print("Exception connecting to sqlite database: %s " % e)
@@ -90,17 +87,13 @@ def deleteuser(args):
         config.read(config_dir)
         database_dir = os.path.expanduser(config.get('sremote', 'database_dir'))
         try:
-            # This will either create a new database if it doesn't exist or read from an existing db if it does exist.
-            conn = db.connect(os.path.join(database_dir, 'db.sqlite'))
-            cur = conn.cursor()
-            db.create_tables(conn, cur)
-
+            Db.instance(os.path.join(database_dir, 'db.sqlite'))
             print('Delete user: please authenticate...')
             
             while True:
                 admin_username = raw_input('Enter admin username: ')
                 admin_password = getpass('Enter admin password: ')
-                row = db.get_user(conn, cur, admin_username)
+                row = Db.instance().get_user(admin_username)
                 if row[3] != 1:
                     print('Please sign in using administrator credentials.')
                 elif admin_password != row[2]:
@@ -110,8 +103,8 @@ def deleteuser(args):
 
             username_to_delete = raw_input('Enter username to delete: ')
 
-            if db.user_exists(conn, cur, username_to_delete):
-                db.delete_user(conn, cur, username_to_delete)
+            if Db.instance().user_exists(username_to_delete):
+                Db.instance().delete_user(username_to_delete)
                 print('Deleted user %s.' % username_to_delete)
             else:
                 sys.exit("User doesn't exist.")
@@ -129,11 +122,8 @@ def listusers(args):
         config.read(config_dir)
         database_dir = os.path.expanduser(config.get('sremote', 'database_dir'))
         try:
-            # This will either create a new database if it doesn't exist or read from an existing db if it does exist.
-            conn = db.connect(os.path.join(database_dir, 'db.sqlite'))
-            cur = conn.cursor()
-            db.create_tables(conn, cur)
-            it = db.list_users(conn, cur)
+            Db.instance(os.path.join(database_dir, 'db.sqlite'))
+            it = Db.instance().list_users()
             print("%s%sCreated" % ("Username".ljust(70), "Admin".ljust(20)))
             # https://docs.python.org/2/library/datetime.html#strftime-strptime-behavior
             for row in it:
@@ -182,7 +172,7 @@ def runserver(args):
         config.read(config_dir)
         (tick, send_update_tick, port_number,
             daemonize, log_level, level, log_path, database_dir) = resolve_config(args, config)
-        
+
         logging.basicConfig(filename=log_path, format='%(asctime)s::%(levelname)s::%(name)s::%(message)s', level=level)
         logger = logging.getLogger('SupervisorRemote')
         logger.info('Loading configuration from %s' % config_dir)

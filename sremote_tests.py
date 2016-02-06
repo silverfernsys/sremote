@@ -19,9 +19,7 @@ class SRemoteTest(unittest.TestCase):
     	url = 'http://0.0.0.0:8080/token/'
     	headers = {'username': 'info1@example.com', 'password': 'asdf'}
     	response = requests.post(url, headers=headers)
-    	# print(dir(response))
     	print('response: %s' % response.json())
-    	# self.assertEqual()
 
 if __name__ == '__main__':
     unittest.main()
