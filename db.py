@@ -3,6 +3,7 @@ import sqlite3
 import time
 import os
 import binascii
+from passlib.apps import custom_app_context as pwd_context
 
 class Db():
     _instance = None
@@ -15,6 +16,7 @@ class Db():
 
     def __init__(self, path):
         self.conn = sqlite3.connect(path)
+        self.conn.row_factory = sqlite3.Row
         self._create_tables()
 
     # These are helper functions for server.py to interact with the sqlite database.
@@ -51,7 +53,9 @@ class Db():
         self.conn.commit()
 
     def insert_user(self, username, password, admin):
-        values = (None, username, password, admin, time.time())
+        # http://pythonhosted.org/passlib/new_app_quickstart.html
+        pwd_hash = pwd_context.encrypt(password)
+        values = (None, username, pwd_hash, admin, time.time())
         cur = self.conn.cursor()
         cur.execute('INSERT INTO user VALUES (?,?,?,?,?)', values)
         self.conn.commit()
@@ -74,7 +78,7 @@ class Db():
     def authenticate_user(self, username, password):
         user = self.get_user(username)
         if user:
-            if password == user[2]:
+            if pwd_context.verify(password, user['password']):
                 return True
             else:
                 return False
@@ -115,7 +119,7 @@ class Db():
         token_data = cur.fetchone()
         if token_data != None:
             # Return an existing token
-            return token_data[2]
+            return token_data['token']
         else:
             return None
 
@@ -126,7 +130,7 @@ class Db():
             # https://github.com/tomchristie/django-rest-framework/blob/master/rest_framework/authtoken/models.py
             token = binascii.hexlify(os.urandom(20)).decode()
             user = self.get_user(username)
-            values = (None, user[0], token, time.time())
+            values = (None, user['id'], token, time.time())
             cur = self.conn.cursor()
             cur.execute('INSERT INTO token VALUES (?,?,?,?)', values)
             self.conn.commit()
@@ -151,7 +155,7 @@ class Db():
         cur.execute('SELECT userid FROM token WHERE token=?', (token,))
         token_data = cur.fetchone()
         if token_data:
-            cur.execute('SELECT * FROM user WHERE id=?', (token_data[0],))
+            cur.execute('SELECT * FROM user WHERE id=?', (token_data['userid'],))
             return cur.fetchone()
         else:
             return None
@@ -203,7 +207,7 @@ class DbTest(unittest.TestCase):
 
         Db.instance().create_token('info@example.com')
         token = Db.instance().get_token('info@example.com')
-        self.assertEqual(Db.instance().get_user_with_token(token)[1], 'info@example.com', 'user emails are equal')
+        self.assertEqual(Db.instance().get_user_with_token(token)['username'], 'info@example.com', 'user emails are equal')
 
         # Test creation and cleanup 
         self.assertEqual(Db.instance()._table_exists('user'), True, 'user table exists')

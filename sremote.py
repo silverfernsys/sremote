@@ -125,11 +125,11 @@ def listusers(args):
             print("%s%sCreated" % ("Username".ljust(70), "Admin".ljust(20)))
             # https://docs.python.org/2/library/datetime.html#strftime-strptime-behavior
             for row in it:
-                if row[3] == 0:
+                if row['admin'] == 0:
                     admin_str = 'N'
                 else:
                     admin_str = 'Y'
-                print("%s%s%s" % (row[1].ljust(70), admin_str.ljust(20), datetime.fromtimestamp(row[4]).strftime('%d-%m-%Y %H:%M:%S')))
+                print("%s%s%s" % (row['username'].ljust(70), admin_str.ljust(20), datetime.fromtimestamp(row['created']).strftime('%d-%m-%Y %H:%M:%S')))
         except Exception as e:
             print("Exception connecting to sqlite database: %s " % e)
     except IOError as e:
@@ -148,7 +148,7 @@ def listtokens(args):
             print("%s%sCreated" % ("Username".ljust(40), "Token".ljust(42)))
             # https://docs.python.org/2/library/datetime.html#strftime-strptime-behavior
             for row in Db.instance().list_tokens():
-                print("%s%s%s" % (row[0].ljust(40), row[1].ljust(42), datetime.fromtimestamp(row[2]).strftime('%d-%m-%Y %H:%M:%S')))
+                print("%s%s%s" % (row['username'].ljust(40), row['token'].ljust(42), datetime.fromtimestamp(row['created']).strftime('%d-%m-%Y %H:%M:%S')))
         except Exception as e:
             print("Exception connecting to sqlite database: %s " % e)
     except IOError as e:
