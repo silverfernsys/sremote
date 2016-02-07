@@ -71,8 +71,10 @@ class Application():
             self.config_path = args.config or self._findConfig()
             config = ConfigParser.ConfigParser()
             config.read(self.config_path)
-            (self.tick, self.send_update_tick, self.port_number, self.max_wait_seconds_before_shutdown,
-                self.daemonize, self.log_file, self.log_level, self.log_level_num, self.log_file, self.database_dir) = self._resolveConfig(args, config)
+            (self.tick, self.send_update_tick, self.port_number,
+                self.max_wait_seconds_before_shutdown,
+                self.daemonize, self.log_file, self.log_level,
+                self.log_level_num, self.log_file, self.database_dir) = self._resolveConfig(args, config)
             # Create databases here!
             Db.instance(os.path.join(self.database_dir, 'db.sqlite'))
         except Exception as e:

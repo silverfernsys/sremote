@@ -1,7 +1,11 @@
 #!/usr/bin/env python
 from coverage import Coverage
-from procinfo import ProcInfoTest
-from db import DbTest
+# I would really like to fix this stupidity, but we'll see what happens.
+import sys, os
+sys.path.insert(0, os.path.split(os.path.split(os.path.dirname(os.path.abspath(__file__)))[0])[0])
+
+from procinfo_test import ProcInfoTest
+from db_test import DbTest
 from unittest import TestLoader, TextTestRunner, TestSuite
 
 def main():
