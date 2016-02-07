@@ -22,9 +22,9 @@ from helpers import binary_search
 class SendUpdates():
     version = 0.0
 
-    def __init__(self, config):
-        self.update_interval = config.getint('sremote', 'tick')
-        self.push_interval = config.getint('sremote', 'send_update_tick')
+    def __init__(self, **kwargs):
+        self.update_interval = kwargs['tick']
+        self.push_interval = kwargs['send_update_tick']
         self.xmlrpc = server()
         SendUpdates.version = float(self.xmlrpc.supervisor.getVersion())
 
@@ -135,16 +135,21 @@ class WSHandler(tornado.websocket.WebSocketHandler):
         token = self.request.headers.get('authorization')
         user = Db.instance().get_user_with_token(token)
         if user:
+            print('FOUND USER')
             WSHandler.connections.append(self)
         else:
+            print('CLOSING CONNECTION')
             self.close()
       
     def on_message(self, message):
         try:
-            print('message received:  %s' % message)
-            # Reverse Message and send it back
-            print('sending back message: %s' % message[::-1])
-            self.write_message(message[::-1])
+            token = self.request.headers.get('authorization')
+            user = Db.instance().get_user_with_token(token)
+            if user:
+                print('message received:  %s' % message)
+                # Reverse Message and send it back
+                print('sending back message: %s' % message[::-1])
+                self.write_message(message[::-1])
         except Exception:
             pass
  
@@ -152,8 +157,7 @@ class WSHandler(tornado.websocket.WebSocketHandler):
         print('connection closed')
         if self in WSHandler.connections:
             WSHandler.connections.remove(self)
-        
- 
+
     def check_origin(self, origin):
         return True
 
@@ -220,8 +224,7 @@ class Server():
         self.logger.warning("Caught signal: %s", sig)
         tornado.ioloop.IOLoop.instance().add_callback(self.shutdown)
 
-    def __init__(self, config):
-        self.config = config
+    def __init__(self, **kwargs):
         self.logger = logging.getLogger('Web Server')
 
         application = tornado.web.Application([
@@ -231,10 +234,10 @@ class Server():
             (r'/ws/', WSHandler),
         ])
 
-        send_updates = SendUpdates(config)
-        Db.instance(os.path.join(os.path.expanduser(config.get('sremote', 'database_dir')), 'db.sqlite'))
+        send_updates = SendUpdates(**kwargs)
         # event_server = EventServer(threaded=True)
-        port = self.config.getint('sremote', 'port_number')
+        self.max_wait_seconds_before_shutdown = kwargs['max_wait_seconds_before_shutdown']
+        port = kwargs['port']
         server = tornado.httpserver.HTTPServer(application)
         server.listen(port)
         self.logger.info('Running on port %s' % port)
@@ -247,7 +250,7 @@ class Server():
     def shutdown(self):
         self.logger.info('Stopping HTTP Server.')
         self.server.stop()
-        seconds = self.config.getint('sremote', 'max_wait_seconds_before_shutdown')
+        seconds = self.max_wait_seconds_before_shutdown
         self.logger.info('Will shutdown in %s seconds...', seconds)
         io_loop = tornado.ioloop.IOLoop.instance()
         deadline = time.time() + seconds
