@@ -65,6 +65,16 @@ class SRemoteTest(unittest.TestCase):
         result = ws.recv()
         print("Received '%s'" % result)
         ws.close()
+        print(dir(ws))
+
+        ws = create_connection("ws://127.0.0.1:8080/ws/", header=["authorization: garbage"])
+        ws.send("Hello, World")
+        print("Sent")
+        print("Receiving...")
+        result = ws.recv()
+        print("Received '%s'" % result)
+        ws.close()
+        print(dir(ws))
 
 if __name__ == '__main__':
     unittest.main()

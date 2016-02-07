@@ -5,7 +5,6 @@ import time
 import argparse
 import logging
 import os
-# import db
 from db import Db
 import sys
 from getpass import getpass
@@ -86,17 +85,16 @@ def deleteuser(args):
         config = ConfigParser.ConfigParser()
         config.read(config_dir)
         database_dir = os.path.expanduser(config.get('sremote', 'database_dir'))
+        print(database_dir)
         try:
             Db.instance(os.path.join(database_dir, 'db.sqlite'))
             print('Delete user: please authenticate...')
-            
             while True:
                 admin_username = raw_input('Enter admin username: ')
                 admin_password = getpass('Enter admin password: ')
-                row = Db.instance().get_user(admin_username)
-                if row[3] != 1:
+                if not Db.instance().is_admin(admin_username):
                     print('Please sign in using administrator credentials.')
-                elif admin_password != row[2]:
+                elif not Db.instance().authenticate_user(admin_username, admin_password):
                     print("Username/password don't match.")
                 else:
                     break
@@ -107,7 +105,7 @@ def deleteuser(args):
                 Db.instance().delete_user(username_to_delete)
                 print('Deleted user %s.' % username_to_delete)
             else:
-                sys.exit("User doesn't exist.")
+                sys.exit("User doesn't exist. Doing nothing.")
         except Exception as e:
             print("Exception connecting to sqlite database: %s " % e)
     except IOError as e:
@@ -171,10 +169,9 @@ def createtoken(args):
             while True:
                 admin_username = raw_input('Enter admin username: ')
                 admin_password = getpass('Enter admin password: ')
-                row = Db.instance().get_user(admin_username)
-                if row[3] != 1:
+                if not Db.instance().is_admin(admin_username):
                     print('Please sign in using administrator credentials.')
-                elif admin_password != row[2]:
+                elif not Db.instance().authenticate_user(admin_username, admin_password):
                     print("Username/password don't match.")
                 else:
                     break
@@ -205,10 +202,9 @@ def deletetoken(args):
             while True:
                 admin_username = raw_input('Enter admin username: ')
                 admin_password = getpass('Enter admin password: ')
-                row = Db.instance().get_user(admin_username)
-                if row[3] != 1:
+                if not Db.instance().is_admin(admin_username):
                     print('Please sign in using administrator credentials.')
-                elif admin_password != row[2]:
+                elif not Db.instance().authenticate_user(admin_username, admin_password):
                     print("Username/password don't match.")
                 else:
                     break

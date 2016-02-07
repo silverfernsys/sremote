@@ -81,6 +81,16 @@ class Db():
         else:
             return False
 
+    def is_admin(self, username):
+        user = self.get_user(username)
+        if user:
+            if user[3] == 1:
+                return True
+            else:
+                return False
+        else:
+            return False
+
     def user_exists(self, username):
         t = (username,)
         cur = self.conn.cursor()
