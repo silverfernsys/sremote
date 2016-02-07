@@ -129,13 +129,15 @@ class WSHandler(tornado.websocket.WebSocketHandler):
 
     # def __del__(self):
     #     print("WSHandler.__del__")
-
+    @tornado.web.addslash
     def open(self):
         print('new connection')
-        if(self.request.headers['Authorization'] != settings.AUTH_KEY):
-            self.close()
-        else:
+        token = self.request.headers.get('authorization')
+        user = Db.instance().get_user_with_token(token)
+        if user:
             WSHandler.connections.append(self)
+        else:
+            self.close()
       
     def on_message(self, message):
         try:
@@ -174,23 +176,27 @@ class HTTPStatusHandler(tornado.web.RequestHandler):
     @tornado.web.addslash
     def get(self):
         try:
-            timestamp_str = self.get_query_argument('timestamp', None, True)
-            if timestamp_str != None:
-                timestamp = float(timestamp_str)
+            token = self.request.headers.get('authorization')
+            user = Db.instance().get_user_with_token(token)
+            if user is None:
+                data = {'error': 'not authorized'}
             else:
-                timestamp = -1.0
-
-            print('HTTPStatusHandler.get: timestamp_str: %s' % timestamp_str)
-            processes = []
-            for p in ProcInfo.all():
-                processes.append({'group': p.group, 'name': p.name, 'pid':p.pid, 'state': p.state,
-                    'statename': p.statename, 'start': p.start, 'cpu': binary_search(p.cpu, timestamp),
-                    'mem': binary_search(p.mem, timestamp)})
-            data = {'processes': processes, 'version': SendUpdates.version}
+                timestamp_str = self.get_query_argument('timestamp', None, True)
+                if timestamp_str != None:
+                    timestamp = float(timestamp_str)
+                else:
+                    timestamp = -1.0
+                processes = []
+                for p in ProcInfo.all():
+                    processes.append({'group': p.group, 'name': p.name, 'pid':p.pid, 'state': p.state,
+                        'statename': p.statename, 'start': p.start, 'cpu': binary_search(p.cpu, timestamp),
+                        'mem': binary_search(p.mem, timestamp)})
+                data = {'processes': processes, 'version': SendUpdates.version}
         except Exception as e:
             print('Error: %s' % e)
             logger = logging.getLogger('Web Server')
             logger.error(e)
+            data = {'error': e}
         self.set_header('Content-Type', 'application/json')
         self.write(json.dumps(data))
 
@@ -222,7 +228,7 @@ class Server():
             (r'/', HTTPHandler),
             (r'/status/', HTTPStatusHandler),
             (r'/token/', HTTPTokenHandler),
-            (r'/ws', WSHandler),
+            (r'/ws/', WSHandler),
         ])
 
         send_updates = SendUpdates(config)

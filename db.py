@@ -136,6 +136,16 @@ class Db():
         """
         return cur.execute(join)
 
+    def get_user_with_token(self, token):
+        cur = self.conn.cursor()
+        cur.execute('SELECT userid FROM token WHERE token=?', (token,))
+        token_data = cur.fetchone()
+        if token_data:
+            cur.execute('SELECT * FROM user WHERE id=?', (token_data[0],))
+            return cur.fetchone()
+        else:
+            return None
+
     # Deletes a token if it exists. Returns true if there was a token to delete.
     # Returns false if there was no token to delete.
     def delete_token(self, username):
@@ -180,6 +190,10 @@ class DbTest(unittest.TestCase):
         self.assertEqual(Db.instance().delete_token('info@example.com'), True, 'deleted token')
         self.assertEqual(Db.instance().delete_token('info@example.com'), False, 'no token to delete')
         self.assertEqual(Db.instance().token_count(), 0, '0 tokens')
+
+        Db.instance().create_token('info@example.com')
+        token = Db.instance().get_token('info@example.com')
+        self.assertEqual(Db.instance().get_user_with_token(token)[1], 'info@example.com', 'user emails are equal')
 
         # Test creation and cleanup 
         self.assertEqual(Db.instance()._table_exists('user'), True, 'user table exists')

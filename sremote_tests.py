@@ -4,6 +4,7 @@ import subprocess
 import requests
 import time
 import json
+from websocket import create_connection
 
 class SRemoteTest(unittest.TestCase):
     def setUp(self):
@@ -30,10 +31,40 @@ class SRemoteTest(unittest.TestCase):
         self.assertTrue('error' in json.loads(response.text), "error returned")
 
         # Test with non-existent username
-        headers = {'username': 'info31@example.com', 'password': 'asdf'}
+        headers = {'username': 'info99@example.com', 'password': 'asdf'}
         response = requests.post(url, headers=headers)
         self.assertTrue('error' in json.loads(response.text), "error returned")
 
+    def test_status(self):
+        # Obtain an authorization token
+        url = 'http://0.0.0.0:8080/token/'
+        headers = {'username': 'info3@example.com', 'password': 'asdf'}
+        response = requests.post(url, headers=headers)
+        json_data = json.loads(response.text)
+        self.assertTrue('token' in json_data, "token returned")
+
+        # Get status
+        url = 'http://0.0.0.0:8080/status/'
+        headers = {'authorization': json_data['token']}
+        response = requests.get(url, headers=headers)
+        json_data = json.loads(response.text)
+        self.assertTrue('version' in json_data, "'version' in response json key")
+        self.assertTrue('processes' in json_data, "'processes' in response json key")
+
+    def test_ws(self):
+        url = 'http://0.0.0.0:8080/token/'
+        headers = {'username': 'info3@example.com', 'password': 'asdf'}
+        response = requests.post(url, headers=headers)
+        json_data = json.loads(response.text)
+        self.assertTrue('token' in json_data, "token returned")
+
+        ws = create_connection("ws://127.0.0.1:8080/ws/", header=["authorization: %s" % json_data['token']])
+        ws.send("Hello, World")
+        print("Sent")
+        print("Receiving...")
+        result = ws.recv()
+        print("Received '%s'" % result)
+        ws.close()
 
 if __name__ == '__main__':
     unittest.main()
