@@ -27,7 +27,7 @@ class ApplicationTest(unittest.TestCase):
         config.set('sremote', 'log_file', os.path.join(self.temp_dir, 'sremote.log'))
         config.set('sremote', 'database_dir', self.temp_dir)
 
-        # Writing our configuration file to 'sremote.conf'
+        # Writing our configuration file to 'temp_dir/sremote.conf'
         with open(os.path.join(self.temp_dir, 'sremote.conf'), 'wb') as configfile:
             config.write(configfile)
 

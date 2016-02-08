@@ -1,7 +1,7 @@
 import unittest
 import tempfile
 import os
-from sremote.db import Db
+from sremote.models.db import Db
 
 class DbTest(unittest.TestCase):
     def setUp(self):

@@ -5,7 +5,7 @@ import time
 import argparse
 import logging
 import os
-from db import Db
+from models.db import Db
 import sys
 from getpass import getpass
 import ConfigParser
