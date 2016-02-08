@@ -193,8 +193,8 @@ class HTTPStatusHandler(tornado.web.RequestHandler):
                 processes = []
                 for p in ProcInfo.all():
                     processes.append({'group': p.group, 'name': p.name, 'pid':p.pid, 'state': p.state,
-                        'statename': p.statename, 'start': p.start, 'cpu': binary_search(p.cpu, timestamp),
-                        'mem': binary_search(p.mem, timestamp)})
+                        'statename': p.statename, 'start': p.start, 'cpu': p.get_cpu(timestamp),
+                        'mem': p.get_mem(timestamp)})
                 data = {'processes': processes, 'version': SendUpdates.version}
         except Exception as e:
             print('Error: %s' % e)

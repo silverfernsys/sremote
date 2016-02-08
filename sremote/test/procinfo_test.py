@@ -1,4 +1,5 @@
 import unittest
+from time import time
 from sremote.procinfo import ProcInfo
 
 class ProcInfoTest(unittest.TestCase):
@@ -24,16 +25,16 @@ class ProcInfoTest(unittest.TestCase):
         self.assertEqual(before_count_proc_0 + 3, after_count_proc_0, "after_count_proc_0 is 3 more than before_count_proc_0")
         self.assertEqual(before_count_proc_1 + 3, after_count_proc_1, "after_count_proc_1 is 3 more than before_count_proc_1")
 
-    def test_cpu_and_mem_equal_length(self):
+    def test_cpu_and_mem_filter(self):
         before_count_cpu = len(self.proc_0.cpu)
         before_count_mem = len(self.proc_0.mem)
         self.assertEqual(before_count_cpu, before_count_mem, "before_count_cpu == before_count_mem")
+        timestamp = time()
         ProcInfo.updateall()
         ProcInfo.updateall()
         ProcInfo.updateall()
-        after_count_cpu = len(self.proc_0.cpu)
-        after_count_mem = len(self.proc_0.mem)
-        self.assertEqual(after_count_cpu, after_count_mem, "after_count_cpu == after_count_mem")
+        self.assertEqual(len(self.proc_0.get_cpu(timestamp)), 3, "filtered cpu length == 3")
+        self.assertEqual(len(self.proc_0.get_mem(timestamp)), 3, "filtered cpu length == 3")
  
     def test_statename_change(self):
         self.assertEqual(self.proc_0.state, 0, "state is 0")
