@@ -46,17 +46,18 @@ class Application():
 
     def _findConfig(self):
         file_name = 'sremote.conf'
+        root_path = os.path.split(sys.path[0])[0]
         file_path = os.path.join(sys.path[0], file_name)
         try:
             with open(file_path) as o:
                 o.close()
-                return os.path.join(sys.path[0], file_name)
+                return os.path.join(root_path, file_name)
         except IOError as e:
             try:
-                file_path = os.path.join(sys.path[0], 'etc', file_name)
+                file_path = os.path.join(root_path, 'etc', file_name)
                 with open(file_path) as o:
                     o.close()
-                    return os.path.join(sys.path[0], 'etc', file_name)
+                    return os.path.join(root_path, 'etc', file_name)
             except IOError as e:
                 try:
                     file_path = os.path.join('etc', 'sremote', file_name)
@@ -64,11 +65,13 @@ class Application():
                         o.close()
                         return os.path.join('etc', 'sremote', file_name)
                 except IOError as e:
-                    sys.exit('Cannnot find file. Tried %s/%s, %s/etc/%s, and /etc/%s\n' % (sys.path[0], file_name, sys.path[0], file_name, file_name))
+                    sys.exit('Cannnot find configuration file. Tried %s/%s, %s/etc/%s, and /etc/%s\n' % (sys.path[0], file_name, sys.path[0], file_name, file_name))
 
     def _start(self, args):
         try:
+            # print('args.config: %s' % args.config)
             self.config_path = args.config or self._findConfig()
+            print('config_path: %s' % self.config_path)
             config = ConfigParser.ConfigParser()
             config.read(self.config_path)
             (self.tick, self.send_update_tick, self.port_number,
@@ -193,7 +196,6 @@ class Application():
 
     def runServer(self, args):
         self._start(args)
-        print(self.log_file)
         logging.basicConfig(filename=self.log_file, format='%(asctime)s::%(levelname)s::%(name)s::%(message)s', level=self.log_level_num)
         logger = logging.getLogger('SupervisorRemote')
         logger.info('Loading configuration from %s' % self.config_path)

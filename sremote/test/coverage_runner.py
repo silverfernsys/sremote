@@ -6,16 +6,18 @@ sys.path.insert(0, os.path.split(os.path.split(os.path.dirname(os.path.abspath(_
 
 from procinfo_test import ProcInfoTest
 from db_test import DbTest
+from app_test import ApplicationTest
 from unittest import TestLoader, TextTestRunner, TestSuite
 
 def main():
-    cov = Coverage()
+    cov = Coverage(omit=['*passlib*', '*test*'])
     cov.start()
 
     loader = TestLoader()
     suite = TestSuite((
         loader.loadTestsFromTestCase(ProcInfoTest),
-        loader.loadTestsFromTestCase(DbTest)
+        loader.loadTestsFromTestCase(DbTest),
+        # loader.loadTestsFromTestCase(ApplicationTest),
         ))
 
     runner = TextTestRunner(verbosity = 2)
@@ -23,7 +25,7 @@ def main():
 
     cov.stop()
     cov.save()
-    cov.html_report()
+    # cov.html_report()
 
 if __name__ == '__main__':
     main()
