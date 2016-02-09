@@ -9,7 +9,7 @@ import time
 from tornado.testing import AsyncHTTPTestCase
 from tornado.web import Application, RequestHandler, url
 
-from sremote.http import HTTPHandler, HTTPStatusHandler, HTTPTokenHandler
+from sremote.http import HTTPVersionHandler, HTTPStatusHandler, HTTPTokenHandler
 from sremote.models.db import Db
 from sremote.procinfo import ProcInfo
 
@@ -35,13 +35,15 @@ class HTTPTestCase(AsyncHTTPTestCase):
 
     def get_app(self):
         return Application([
-            url(r'/', HTTPHandler),
+            url(r'/', HTTPVersionHandler),
             url(r'/status/', HTTPStatusHandler),
             url(r'/token/', HTTPTokenHandler),
         ])
 
     def test_http_handler(self):
         response = self.fetch('/', method='GET')
+        response_data = json.loads(response.body)
+        self.assertTrue('version' in response_data)
         self.assertEqual(response.code, 200)
 
     def test_http_token_handler(self):

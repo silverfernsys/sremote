@@ -5,12 +5,11 @@ from models.db import Db
 from procinfo import ProcInfo
 from processupdater import ProcessUpdater
 
-class HTTPHandler(tornado.web.RequestHandler):
-    def __init__(self, application, request, **kwargs):
-        super(HTTPHandler, self).__init__(application, request, **kwargs)
-
+class HTTPVersionHandler(tornado.web.RequestHandler):
+    # def __init__(self, application, request, **kwargs):
+    #     super(HTTPVersionHandler, self).__init__(application, request, **kwargs)
     def get(self):
-        data = {'key': 'value'}
+        data = {'version': ProcessUpdater.version}
         self.set_header('Content-Type', 'application/json')
         self.write(json.dumps(data))
 

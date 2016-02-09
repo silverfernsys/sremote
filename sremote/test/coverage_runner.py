@@ -21,19 +21,23 @@ def main():
         ])
     cov.start()
 
-    from procinfo_test import ProcInfoTest
+    from database_test import DatabaseTest
     from db_test import DbTest
     # from app_test import ApplicationTest
     from http_test import HTTPTestCase
+    from procinfo_test import ProcInfoTest
+    from user_test import UserTest
     from ws_test import WebSocketTestCase
     from unittest import TestLoader, TextTestRunner, TestSuite
 
     loader = TestLoader()
     suite = TestSuite((
-        loader.loadTestsFromTestCase(ProcInfoTest),
-        loader.loadTestsFromTestCase(DbTest),
-        loader.loadTestsFromTestCase(HTTPTestCase),
-        loader.loadTestsFromTestCase(WebSocketTestCase),
+        # loader.loadTestsFromTestCase(ProcInfoTest),
+        # loader.loadTestsFromTestCase(DbTest),
+        # loader.loadTestsFromTestCase(DatabaseTest),
+        loader.loadTestsFromTestCase(UserTest),
+        # loader.loadTestsFromTestCase(HTTPTestCase),
+        # loader.loadTestsFromTestCase(WebSocketTestCase),
         # loader.loadTestsFromTestCase(ApplicationTest),
         ))
 

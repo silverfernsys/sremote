@@ -5,7 +5,7 @@ import time
 import tornado.ioloop
 from processupdater import ProcessUpdater
 from ws import WSHandler
-from http import HTTPHandler, HTTPStatusHandler, HTTPTokenHandler
+from http import HTTPVersionHandler, HTTPStatusHandler, HTTPTokenHandler
 
 class Server():
     # Adapted from code found at https://gist.github.com/mywaiting/4643396
@@ -17,7 +17,7 @@ class Server():
         self.logger = logging.getLogger('Web Server')
 
         application = tornado.web.Application([
-            (r'/', HTTPHandler),
+            (r'/', HTTPVersionHandler),
             (r'/status/', HTTPStatusHandler),
             (r'/token/', HTTPTokenHandler),
             (r'/ws/', WSHandler),
