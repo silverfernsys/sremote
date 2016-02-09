@@ -15,12 +15,16 @@ class WSHandler(tornado.websocket.WebSocketHandler):
     def open(self):
         print('new connection')
         token = self.request.headers.get('authorization')
-        user = Db.instance().get_user_with_token(token)
-        if user:
-            print('FOUND USER')
-            WSHandler.connections.append(self)
-        else:
-            print('CLOSING CONNECTION')
+        print('token: %s' % token)
+        try:
+            user = Db.instance().get_user_with_token(token)
+            if user:
+                print('FOUND USER')
+                WSHandler.connections.append(self)
+            else:
+                print('CLOSING CONNECTION')
+                self.close()
+        except Exception as e:
             self.close()
       
     def on_message(self, message):
