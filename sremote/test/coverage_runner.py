@@ -24,10 +24,10 @@ def main():
 
     loader = TestLoader()
     suite = TestSuite((
-        loader.loadTestsFromTestCase(ProcInfoTest),
-        loader.loadTestsFromTestCase(DbTest),
+        # loader.loadTestsFromTestCase(ProcInfoTest),
+        # loader.loadTestsFromTestCase(DbTest),
         loader.loadTestsFromTestCase(HTTPTestCase),
-        loader.loadTestsFromTestCase(WebSocketTestCase),
+        # loader.loadTestsFromTestCase(WebSocketTestCase),
         # loader.loadTestsFromTestCase(ApplicationTest),
         ))
 

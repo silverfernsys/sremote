@@ -2,14 +2,12 @@
 import json
 import tornado.httpserver
 from models.db import Db
+from procinfo import ProcInfo
+from processupdater import ProcessUpdater
 
 class HTTPHandler(tornado.web.RequestHandler):
     def __init__(self, application, request, **kwargs):
         super(HTTPHandler, self).__init__(application, request, **kwargs)
-        print("HTTPHandler.__init__")
-
-    def __del__(self):
-        print("HTTPHandler.__del__")
 
     def get(self):
         data = {'key': 'value'}
@@ -36,25 +34,31 @@ class HTTPStatusHandler(tornado.web.RequestHandler):
                     processes.append({'group': p.group, 'name': p.name, 'pid':p.pid, 'state': p.state,
                         'statename': p.statename, 'start': p.start, 'cpu': p.get_cpu(timestamp),
                         'mem': p.get_mem(timestamp)})
-                data = {'processes': processes, 'version': SendUpdates.version}
+                data = {'processes': processes, 'version': ProcessUpdater.version}
         except Exception as e:
             print('Error: %s' % e)
-            logger = logging.getLogger('Web Server')
-            logger.error(e)
+            try:
+                logger = logging.getLogger('Web Server')
+                logger.error(e)
+            except:
+                pass
             data = {'error': e}
         self.set_header('Content-Type', 'application/json')
         self.write(json.dumps(data))
 
 class HTTPTokenHandler(tornado.web.RequestHandler):
     @tornado.web.addslash
-    def post(self):
-        username = self.request.headers.get('username')
-        password = self.request.headers.get('password')
-        if Db.instance().authenticate_user(username, password):
-            Db.instance().create_token(username)
-            token = Db.instance().get_token(username)
-            data = {'token': token}
-        else:
-            data = {'error': 'invalid username/password'}
+    def get(self):
+        try:
+            username = self.request.headers.get('username')
+            password = self.request.headers.get('password')
+            if Db.instance().authenticate_user(username, password):
+                Db.instance().create_token(username)
+                token = Db.instance().get_token(username)
+                data = {'token': token}
+            else:
+                data = {'error': 'invalid username/password'}
+        except Exception as e:
+            data = {'error': str(e)}
         self.set_header('Content-Type', 'application/json')
         self.write(json.dumps(data))

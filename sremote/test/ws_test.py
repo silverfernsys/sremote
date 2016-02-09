@@ -3,6 +3,7 @@
 import base64
 import collections
 import os
+import tempfile
 
 from tornado import simple_httpclient, httpclient
 from tornado.concurrent import TracebackFuture
@@ -11,9 +12,25 @@ from tornado.tcpclient import TCPClient
 from tornado.testing import AsyncHTTPTestCase, gen_test
 from tornado.web import Application
 from tornado.websocket import WebSocketProtocol13
+
 from sremote.ws import WSHandler
+from sremote.models.db import Db
 
 class WebSocketTestCase(AsyncHTTPTestCase):
+    def setUp(self):
+        super(WebSocketTestCase, self).setUp()
+        self.temp_path = tempfile.mktemp()
+        Db.instance(self.temp_path)
+        Db.instance().insert_user('info@example.com', 'asdf', 1)
+        Db.instance().insert_user('info1@example.com', 'asdf', 0)
+        Db.instance().create_token('info@example.com')
+        Db.instance().create_token('info1@example.com')
+        self.token_0 = Db.instance().get_token('info@example.com')
+        self.token_1 = Db.instance().get_token('info1@example.com')
+
+    def tearDown(self):
+        os.remove(self.temp_path)
+
     def get_app(self):
         app = Application([
             (r'/ws/', WSHandler),
@@ -21,7 +38,21 @@ class WebSocketTestCase(AsyncHTTPTestCase):
         return app
 
     @gen_test
-    def test_wshandler(self):
+    def test_wshandler_no_authorization(self):
+        # self.get_http_port() gives us the port of the running test server.
+        ws_url = 'ws://localhost:' + str(self.get_http_port()) + '/ws/'
+        ws_client = yield websocket_connect(ws_url)
+        print('ws_client: %s' % dir(ws_client))
+        # Now we can run a test on the WebSocket.
+        ws_client.write_message("Hi, I'm sending a message to the server.")
+        response = yield ws_client.read_message()
+        print(type(response))
+        # print(response.status_code)
+        # print()
+        self.assertEqual(response, None, "No response from server because authorization not provided.")
+
+    @gen_test
+    def test_wshandler_bad_authorization(self):
         # self.get_http_port() gives us the port of the running test server.
         ws_url = 'ws://localhost:' + str(self.get_http_port()) + '/ws/'
         ws_client = yield websocket_connect(ws_url, headers={'authorization':'asdf'})
@@ -33,6 +64,21 @@ class WebSocketTestCase(AsyncHTTPTestCase):
         # print(response.status_code)
         # print()
         self.assertEqual(response, None, "No response from server because authorization not provided.")
+        # self.assertEqual(response, "Hi client! This is a response from the server.")
+
+    @gen_test
+    def test_wshandler_authorization(self):
+        # self.get_http_port() gives us the port of the running test server.
+        ws_url = 'ws://localhost:' + str(self.get_http_port()) + '/ws/'
+        ws_client = yield websocket_connect(ws_url, headers={'authorization':self.token_0})
+        print('ws_client: %s' % dir(ws_client))
+        # Now we can run a test on the WebSocket.
+        ws_client.write_message("Hi, I'm sending a message to the server.")
+        response = yield ws_client.read_message()
+        print(type(response))
+        # print(response.status_code)
+        # print()
+        # self.assertEqual(response, None, "No response from server because authorization not provided.")
         # self.assertEqual(response, "Hi client! This is a response from the server.")
 
 
