@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import json
 import tornado.websocket
 from models.db import Db
 
@@ -13,34 +14,22 @@ class WSHandler(tornado.websocket.WebSocketHandler):
     #     print("WSHandler.__del__")
     @tornado.web.addslash
     def open(self):
-        print('new connection')
         token = self.request.headers.get('authorization')
-        print('token: %s' % token)
-        try:
-            user = Db.instance().get_user_with_token(token)
-            if user:
-                print('FOUND USER')
-                WSHandler.connections.append(self)
-            else:
-                print('CLOSING CONNECTION')
-                self.close()
-        except Exception as e:
+        user = Db.instance().get_user_with_token(token)
+        if user:
+            WSHandler.connections.append(self)
+        else:
             self.close()
       
     def on_message(self, message):
-        try:
-            token = self.request.headers.get('authorization')
-            user = Db.instance().get_user_with_token(token)
-            if user:
-                print('message received:  %s' % message)
-                # Reverse Message and send it back
-                print('sending back message: %s' % message[::-1])
-                self.write_message(message[::-1])
-        except Exception:
-            pass
+        token = self.request.headers.get('authorization')
+        user = Db.instance().get_user_with_token(token)
+        if user:
+            data = json.loads(message)
+            if data['msg'] == 'update':
+                self.write_message(json.dumps({'msg':'updated'}))
  
     def on_close(self):
-        print('connection closed')
         if self in WSHandler.connections:
             WSHandler.connections.remove(self)
 

@@ -8,7 +8,7 @@ class ProcInfoTest(unittest.TestCase):
         self.proc_1 = ProcInfo('sremote', 'sremote', 9123, 0, 'STOPPED', 1.000)
 
     def tearDown(self):
-        pass
+        ProcInfo.purge()
 
     def test_get(self):
         self.assertEqual(self.proc_0, ProcInfo.get('soffice', 'soffice'), "get works")

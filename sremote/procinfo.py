@@ -129,6 +129,10 @@ class ProcInfo(object):
         for p in ProcInfo.all():
             p.update()
 
+    @classmethod
+    def purge(self):
+        ProcInfo.processes = {}
+
 
 import unittest
 

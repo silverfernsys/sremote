@@ -31,6 +31,7 @@ class HTTPTestCase(AsyncHTTPTestCase):
 
     def tearDown(self):
         os.remove(self.temp_path)
+        ProcInfo.purge()
 
     def get_app(self):
         return Application([
@@ -51,19 +52,21 @@ class HTTPTestCase(AsyncHTTPTestCase):
         self.assertEqual(self.token_0, response_data['token'])
 
     def test_http_status_handler(self):
-        # self, name, group, pid, state, statename, start
         ProcInfo('proc_0', 'group_0', 1, 20, 'RUNNING', time.time())
         ProcInfo('proc_1', 'group_1', 2, 0, 'STOPPED', time.time())
-        ProcInfo.updateall()
-        ProcInfo.updateall()
-        ProcInfo.updateall()
+        
+        # Update ProcInfo 3 times.
+        num_updates = 3
+        for i in range(num_updates):
+            ProcInfo.updateall()
+
         headers = {'authorization': self.token_0}
         response = self.fetch('/status/', method='GET', headers=headers)
         response_data = json.loads(response.body)
         self.assertEqual(response.code, 200)
         self.assertTrue('processes' in response_data)
-        # print(response.code)
-        print(response.body)
+        self.assertEqual(len(response_data['processes'][0]['cpu']), num_updates, "cpu length is %s" % num_updates)
+        self.assertEqual(len(response_data['processes'][0]['mem']), num_updates, "mem length is %s" % num_updates)
 
     # def test_patch_receives_payload(self):
     #     body = b"some patch data"

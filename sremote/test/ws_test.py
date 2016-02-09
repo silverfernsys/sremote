@@ -2,6 +2,7 @@
 # http://stackoverflow.com/questions/9336080/how-do-you-use-tornado-testing-for-creating-websocket-unit-tests
 import base64
 import collections
+import json
 import os
 import tempfile
 
@@ -39,47 +40,33 @@ class WebSocketTestCase(AsyncHTTPTestCase):
 
     @gen_test
     def test_wshandler_no_authorization(self):
-        # self.get_http_port() gives us the port of the running test server.
         ws_url = 'ws://localhost:' + str(self.get_http_port()) + '/ws/'
         ws_client = yield websocket_connect(ws_url)
-        print('ws_client: %s' % dir(ws_client))
-        # Now we can run a test on the WebSocket.
-        ws_client.write_message("Hi, I'm sending a message to the server.")
+        ws_client.write_message(json.dumps({'msg':'update'}))
         response = yield ws_client.read_message()
-        print(type(response))
-        # print(response.status_code)
-        # print()
         self.assertEqual(response, None, "No response from server because authorization not provided.")
+        # self.assertEqual(len(WSHandler.connections), 0, "0 websocket connections.")
 
     @gen_test
     def test_wshandler_bad_authorization(self):
-        # self.get_http_port() gives us the port of the running test server.
         ws_url = 'ws://localhost:' + str(self.get_http_port()) + '/ws/'
         ws_client = yield websocket_connect(ws_url, headers={'authorization':'asdf'})
-        print('ws_client: %s' % dir(ws_client))
-        # Now we can run a test on the WebSocket.
-        ws_client.write_message("Hi, I'm sending a message to the server.")
+        ws_client.write_message(json.dumps({'msg':'update'}))
         response = yield ws_client.read_message()
-        print(type(response))
-        # print(response.status_code)
-        # print()
-        self.assertEqual(response, None, "No response from server because authorization not provided.")
-        # self.assertEqual(response, "Hi client! This is a response from the server.")
+        self.assertEqual(response, None, "No response from server because bad authorization provided.")
+        # self.assertEqual(len(WSHandler.connections), 0, "0 websocket connections.")
 
     @gen_test
     def test_wshandler_authorization(self):
-        # self.get_http_port() gives us the port of the running test server.
         ws_url = 'ws://localhost:' + str(self.get_http_port()) + '/ws/'
         ws_client = yield websocket_connect(ws_url, headers={'authorization':self.token_0})
-        print('ws_client: %s' % dir(ws_client))
-        # Now we can run a test on the WebSocket.
-        ws_client.write_message("Hi, I'm sending a message to the server.")
+        ws_client.write_message(json.dumps({'msg':'update'}))
         response = yield ws_client.read_message()
-        print(type(response))
-        # print(response.status_code)
-        # print()
-        # self.assertEqual(response, None, "No response from server because authorization not provided.")
-        # self.assertEqual(response, "Hi client! This is a response from the server.")
+        response_data = json.loads(response)
+        self.assertEqual(response_data['msg'], 'updated', "Update response from server.")
+        self.assertEqual(len(WSHandler.connections), 1, "1 websocket connection.")
+        # ws_client.close()
+        # self.assertEqual(len(WSHandler.connections), 0, "0 websocket connections.")
 
 
 class WebSocketClientConnection(simple_httpclient._HTTPConnection):
