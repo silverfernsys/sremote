@@ -4,12 +4,14 @@
 import json
 import os
 import tempfile
+import time
 
 from tornado.testing import AsyncHTTPTestCase
 from tornado.web import Application, RequestHandler, url
 
 from sremote.http import HTTPHandler, HTTPStatusHandler, HTTPTokenHandler
 from sremote.models.db import Db
+from sremote.procinfo import ProcInfo
 
 class HTTPTestCase(AsyncHTTPTestCase):
     def setUp(self):
@@ -49,13 +51,19 @@ class HTTPTestCase(AsyncHTTPTestCase):
         self.assertEqual(self.token_0, response_data['token'])
 
     def test_http_status_handler(self):
+        # self, name, group, pid, state, statename, start
+        ProcInfo('proc_0', 'group_0', 1, 20, 'RUNNING', time.time())
+        ProcInfo('proc_1', 'group_1', 2, 0, 'STOPPED', time.time())
+        ProcInfo.updateall()
+        ProcInfo.updateall()
+        ProcInfo.updateall()
         headers = {'authorization': self.token_0}
         response = self.fetch('/status/', method='GET', headers=headers)
         response_data = json.loads(response.body)
         self.assertEqual(response.code, 200)
         self.assertTrue('processes' in response_data)
         # print(response.code)
-        # print(response.body)
+        print(response.body)
 
     # def test_patch_receives_payload(self):
     #     body = b"some patch data"
