@@ -29,9 +29,17 @@ class TokenTest(unittest.TestCase):
         token_0 = Token(user_0)
         token_0.save()
         token_0.save()
+        self.assertEqual(token_0.id, 1, 'id is 1')
+
+        token_0_1 = Token.tokens.get_token_for_user(user_0)
+        self.assertEqual(token_0.id, token_0_1.id, 'ids are equal')
+        self.assertEqual(token_0.user, token_0_1.user, 'users are equal')
+        self.assertEqual(token_0.token, token_0_1.token, 'tokens are equal')
+        self.assertEqual(token_0.created, token_0_1.created, 'created are equal')
 
         token_1 = Token(user_1)
         token_1.save()
+        self.assertEqual(token_1.id, 2, 'id is 2')
         self.assertEqual(Token.tokens.count(), 2, '2 tokens saved')
 
         token_2 = Token(user_0)

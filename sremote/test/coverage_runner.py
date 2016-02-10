@@ -18,6 +18,7 @@ def main():
         '*mock*',
         '*pbr*',
         '*pkg_resources*',
+        '*tablib*',
         ])
     cov.start()
 

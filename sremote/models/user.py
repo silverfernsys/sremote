@@ -59,6 +59,12 @@ class UserManager(Manager):
             except:
                 raise ValueError('User with id does not exist.')
 
+    def get(self, **kwargs):
+        pass
+
+    def all(self):
+        pass
+
     def count(self):
         db = DatabaseManager.instance(UserManager.DATABASE_NAME)
         return db.query(UserManager.COUNT_OBJECT_QUERY).next()['COUNT(*)']

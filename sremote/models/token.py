@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import binascii
+import os
 import time
 from model import Manager, Model
 from database import Database, DatabaseManager
@@ -44,6 +46,20 @@ class TokenManager(Manager):
         obj.id = None
         obj.created = None
 
+    def get_token_for_user(self, user):
+        if user.id:
+            db = DatabaseManager.instance(TokenManager.DATABASE_NAME)
+            token_data = db.query(TokenManager.GET_OBJECT_QUERY, (user.id,)).next()
+            return Token(user=user, token_id=token_data['id'], token=token_data['token'], created=token_data['created'])
+        else:
+            raise ValueError('User has no id.')
+
+    def get(self, **kwargs):
+        pass
+        
+    def all(self):
+        pass
+
     def update_object(self, obj):
         pass
 
@@ -53,10 +69,15 @@ class TokenManager(Manager):
 
 class Token(Model):
     tokens = TokenManager()
+
     def __init__(self, user=None, token_id=None, token=None, created=None):
         self.id = token_id
         self.user = user
-        self.token = token
+
+        if token == None:
+            self.token = binascii.hexlify(os.urandom(20)).decode()
+        else:
+            self.token = token
         self.created = created
 
     def save(self):
