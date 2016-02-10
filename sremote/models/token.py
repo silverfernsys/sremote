@@ -31,8 +31,6 @@ class TokenManager(Manager):
 
     def create_object(self, obj):
         db = DatabaseManager.instance(TokenManager.DATABASE_NAME)
-        # if obj.user.id is None:
-        #     raise ValueError('User.id is None')
         try:
             if not self.get_token_for_user(obj.user):
                 query_data = (None, obj.user.id, obj.token, time.time(),)
