@@ -56,6 +56,7 @@ class UserTest(unittest.TestCase):
         self.assertEqual(user_0_1.admin, user_0_3.admin, 'admin equal')
 
         self.assertTrue(user_0.authenticate('asdf'), 'User authenticates.')
+        self.assertFalse(user_0.authenticate('qwer'), 'User does not authenticate.')
 
         # Now delete the object
         user_0.delete()
@@ -72,4 +73,8 @@ class UserTest(unittest.TestCase):
 
         all_users = User.users.all()
         self.assertEqual(creation_count, len(all_users), 'len == creation_count')
+
+        user_1 = User('jill', 'qwer', True)
+        self.assertFalse(user_1.authenticate('qwer'), 'User does not authenticate because it has not been saved.')
+        self.assertFalse(user_1.authenticate('asdf'), 'User does not authenticate because it has not been saved.')
         

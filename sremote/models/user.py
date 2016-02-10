@@ -72,11 +72,14 @@ class UserManager(Manager):
             return None
 
     def authenticate(self, obj, password):
-        db = DatabaseManager.instance(UserManager.DATABASE_NAME)
-        data = db.query(UserManager.GET_OBJECT_QUERY, (obj.username,)).next()
-        if pwd_context.verify(password, data['password']):
-            return True
-        else:
+        try:
+            db = DatabaseManager.instance(UserManager.DATABASE_NAME)
+            data = db.query(UserManager.GET_OBJECT_QUERY, (obj.username,)).next()
+            if pwd_context.verify(password, data['password']):
+                return True
+            else:
+                return False
+        except:
             return False
 
     def all(self):
