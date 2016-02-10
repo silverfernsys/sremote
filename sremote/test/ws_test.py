@@ -15,22 +15,40 @@ from tornado.web import Application
 from tornado.websocket import WebSocketProtocol13
 
 from sremote.ws import WSHandler
-from sremote.models.db import Db
+from sremote.models.database import DatabaseManager
 
 class WebSocketTestCase(AsyncHTTPTestCase):
     def setUp(self):
         super(WebSocketTestCase, self).setUp()
-        self.temp_path = tempfile.mktemp()
-        Db.instance(self.temp_path)
-        Db.instance().insert_user('info@example.com', 'asdf', 1)
-        Db.instance().insert_user('info1@example.com', 'asdf', 0)
-        Db.instance().create_token('info@example.com')
-        Db.instance().create_token('info1@example.com')
-        self.token_0 = Db.instance().get_token('info@example.com')
-        self.token_1 = Db.instance().get_token('info1@example.com')
+
+        DatabaseManager.add('default', ':memory:')
+        
+        from sremote.models.user import User, UserManager
+        from sremote.models.token import Token, TokenManager
+
+        User.users = UserManager()
+        Token.tokens = TokenManager()
+
+        self.username_0 = 'info@example.com'
+        self.password_0 = 'asdfasdf'
+        self.username_1 = 'info1@example.com'
+        self.password_1 = 'qwerqwer'
+
+        self.user_0 = User(self.username_0, self.password_0, True)
+        self.user_0.save()
+
+        self.user_1 = User(self.username_1, self.password_1, True)
+        self.user_1.save()
+
+        self.token_0 = Token(user=self.user_0)
+        self.token_0.save()
+
+        self.token_1 = Token(user=self.user_1)
+        self.token_1.save()
 
     def tearDown(self):
-        os.remove(self.temp_path)
+        DatabaseManager.remove('default')
+        # ProcInfo.purge()
 
     def get_app(self):
         app = Application([
@@ -59,7 +77,7 @@ class WebSocketTestCase(AsyncHTTPTestCase):
     @gen_test
     def test_wshandler_authorization(self):
         ws_url = 'ws://localhost:' + str(self.get_http_port()) + '/ws/'
-        ws_client = yield websocket_connect(ws_url, headers={'authorization':self.token_0})
+        ws_client = yield websocket_connect(ws_url, headers={'authorization':self.token_0.token})
         ws_client.write_message(json.dumps({'msg':'update'}))
         response = yield ws_client.read_message()
         response_data = json.loads(response)

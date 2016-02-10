@@ -105,7 +105,6 @@ class UserManager(Manager):
         return db.query(UserManager.COUNT_OBJECT_QUERY).next()['COUNT(*)']
 
 class User(Model):
-    # @lazy_property
     users = UserManager()
 
     def __init__(self, username, password, admin, user_id=None, created=None):

@@ -1,13 +1,11 @@
 #!/usr/bin/env python
 import json
 import tornado.httpserver
-from models.db import Db
 from procinfo import ProcInfo
 from processupdater import ProcessUpdater
 
 class HTTPVersionHandler(tornado.web.RequestHandler):
-    # def __init__(self, application, request, **kwargs):
-    #     super(HTTPVersionHandler, self).__init__(application, request, **kwargs)
+    @tornado.web.addslash
     def get(self):
         data = {'version': ProcessUpdater.version}
         self.set_header('Content-Type', 'application/json')
@@ -17,12 +15,12 @@ class HTTPVersionHandler(tornado.web.RequestHandler):
 class HTTPStatusHandler(tornado.web.RequestHandler):
     @tornado.web.addslash
     def get(self):
+        from models.user import User
+        from models.token import Token
         try:
-            token = self.request.headers.get('authorization')
-            user = Db.instance().get_user_with_token(token)
-            if user is None:
-                data = {'error': 'not authorized'}
-            else:
+            auth_token = self.request.headers.get('authorization')
+            token = Token.tokens.get(token=auth_token)
+            if token and token.user:
                 timestamp_str = self.get_query_argument('timestamp', None, True)
                 if timestamp_str != None:
                     timestamp = float(timestamp_str)
@@ -34,6 +32,8 @@ class HTTPStatusHandler(tornado.web.RequestHandler):
                         'statename': p.statename, 'start': p.start, 'cpu': p.get_cpu(timestamp),
                         'mem': p.get_mem(timestamp)})
                 data = {'processes': processes, 'version': ProcessUpdater.version}
+            else:
+                data = {'error': 'not authorized'}
         except Exception as e:
             print('Error: %s' % e)
             try:
@@ -48,13 +48,18 @@ class HTTPStatusHandler(tornado.web.RequestHandler):
 class HTTPTokenHandler(tornado.web.RequestHandler):
     @tornado.web.addslash
     def get(self):
+        from models.user import User
+        from models.token import Token
         try:
             username = self.request.headers.get('username')
             password = self.request.headers.get('password')
-            if Db.instance().authenticate_user(username, password):
-                Db.instance().create_token(username)
-                token = Db.instance().get_token(username)
-                data = {'token': token}
+            user = User.users.get(username=username)
+            if user.authenticate(password):
+                token = Token.tokens.get_token_for_user(user)
+                if not token:
+                    token = Token(user=user)
+                    token.save()
+                data = {'token': token.token}
             else:
                 data = {'error': 'invalid username/password'}
         except Exception as e:
