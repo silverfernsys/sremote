@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import time
+from passlib.apps import custom_app_context as pwd_context
 from model import Manager, Model
 from database import Database, DatabaseManager
 
@@ -28,7 +29,8 @@ class UserManager(Manager):
     def create_object(self, obj):
         db = DatabaseManager.instance(UserManager.DATABASE_NAME)
         try:
-            db.query(UserManager.CREATE_OBJECT_QUERY, (None, obj.username, obj.password, int(obj.admin), time.time(),))
+            pwd_hash = pwd_context.encrypt(obj.password)
+            db.query(UserManager.CREATE_OBJECT_QUERY, (None, obj.username, pwd_hash, int(obj.admin), time.time(),))
             user_data = db.query(UserManager.GET_OBJECT_QUERY, (obj.username,)).next()
             obj.id = user_data['id']
             obj.created = user_data['created']
@@ -46,9 +48,11 @@ class UserManager(Manager):
     def update_object(self, obj):
         if obj.id:
             try:
+                pwd_hash = pwd_context.encrypt(obj.password)
                 db = DatabaseManager.instance(UserManager.DATABASE_NAME)
-                db.query(UserManager.UPDATE_OBJECT_QUERY, (obj.username, obj.password, int(obj.admin), obj.id,))
-            except:
+                db.query(UserManager.UPDATE_OBJECT_QUERY, (obj.username, pwd_hash, int(obj.admin), obj.id,))
+            except Exception as e:
+                print('Exception: %s' % e)
                 raise ValueError('User with id does not exist.')
 
     def get(self, **kwargs):
@@ -66,6 +70,14 @@ class UserManager(Manager):
             return User(data['username'], None, bool(data['admin']), data['id'], data['created'])
         else:
             return None
+
+    def authenticate(self, obj, password):
+        db = DatabaseManager.instance(UserManager.DATABASE_NAME)
+        data = db.query(UserManager.GET_OBJECT_QUERY, (obj.username,)).next()
+        if pwd_context.verify(password, data['password']):
+            return True
+        else:
+            return False
 
     def all(self):
         db = DatabaseManager.instance(UserManager.DATABASE_NAME)
@@ -90,7 +102,7 @@ class User(Model):
         self.created = None
 
     def __repr__(self):
-        return '<User {0}, id: {1}, username: {2}, password: {3}, admin: {4}, created: {5}>'.format(id(self), self.id, self.username, self.password, self.admin, self.created)
+        return '<User id: {0}, username: {1}, password: {2}, admin: {3}, created: {4}>'.format(self.id, self.username, self.password, self.admin, self.created)
 
     def save(self):
         if self.id:
@@ -98,6 +110,9 @@ class User(Model):
         else:
             User.users.create_object(self)
             # Now get the id of the newly created object, query it, and get the creation time.
+
+    def authenticate(self, password):
+        return User.users.authenticate(self, password)
 
     def delete(self):
         User.users.delete_object(self)

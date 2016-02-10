@@ -39,7 +39,6 @@ class TokenManager(Manager):
             obj.id = token_data['id']
             obj.created = token_data['created']
         except Exception as e:
-            print('Exception: %s' % e)
             raise ValueError('token for this user already exists')
 
     def delete_object(self, obj):
@@ -123,11 +122,10 @@ class Token(Model):
         self.created = created
 
     def __repr__(self):
-        return '<Token {0}, id: {1}, user: {2}, token: {3}, created: {4}>'.format(id(self), self.id, self.user, self.token, self.created)
+        return '<Token id: {0}, user: {1}, token: {2}, created: {3}>'.format(self.id, self.user, self.token, self.created)
 
     def save(self):
-        if not self.id:
-            Token.tokens.create_object(self)
+        Token.tokens.create_object(self)
 
     def delete(self):
         Token.tokens.delete_object(self)

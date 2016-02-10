@@ -55,6 +55,8 @@ class UserTest(unittest.TestCase):
         self.assertEqual(user_0_1.admin, user_0_2.admin, 'admin equal')
         self.assertEqual(user_0_1.admin, user_0_3.admin, 'admin equal')
 
+        self.assertTrue(user_0.authenticate('asdf'), 'User authenticates.')
+
         # Now delete the object
         user_0.delete()
         self.assertEqual(User.users.count(), 0, 'No more users in database.')
