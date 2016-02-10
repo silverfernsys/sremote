@@ -20,7 +20,8 @@ class UserManager(Manager):
 
     def create_table(self):
         db = DatabaseManager.instance(UserManager.DATABASE_NAME)
-        db.query(UserManager.CREATE_TABLE_QUERY)
+        if not db.table_exists('user'):
+            db.query(UserManager.CREATE_TABLE_QUERY)
 
     def drop_table(self):
         db = DatabaseManager.instance(UserManager.DATABASE_NAME)
@@ -42,8 +43,13 @@ class UserManager(Manager):
         if obj.id:
             db = DatabaseManager.instance(UserManager.DATABASE_NAME)
             db.query(UserManager.DELETE_OBJECT_QUERY, (obj.id,))
-        obj.id = None
-        obj.created = None
+            obj.id = None
+            obj.created = None
+            return True
+        else:
+            obj.id = None
+            obj.created = None
+            return False
 
     def update_object(self, obj):
         if obj.id:
@@ -57,18 +63,21 @@ class UserManager(Manager):
 
     def get(self, **kwargs):
         db = DatabaseManager.instance(UserManager.DATABASE_NAME)
-        if 'id' in kwargs and 'username' in kwargs:
-            data = db.query('SELECT * FROM user WHERE id=? AND username=?;', (kwargs['id'], kwargs['username'],)).next()
-        elif 'id' in kwargs:
-            data = db.query('SELECT * FROM user WHERE id=?;', (kwargs['id'],)).next()
-        elif 'username' in kwargs:
-            data = db.query('SELECT * FROM user WHERE username=?;', (kwargs['username'],)).next()
-        else:
-            raise ValueError("Missing 'id' or 'username' kwargs.")
+        try:
+            if 'id' in kwargs and 'username' in kwargs:
+                data = db.query('SELECT * FROM user WHERE id=? AND username=?;', (kwargs['id'], kwargs['username'],)).next()
+            elif 'id' in kwargs:
+                data = db.query('SELECT * FROM user WHERE id=?;', (kwargs['id'],)).next()
+            elif 'username' in kwargs:
+                data = db.query('SELECT * FROM user WHERE username=?;', (kwargs['username'],)).next()
+            else:
+                raise ValueError("Missing 'id' or 'username' kwargs.")
 
-        if data:
-            return User(data['username'], None, bool(data['admin']), data['id'], data['created'])
-        else:
+            if data:
+                return User(data['username'], None, bool(data['admin']), data['id'], data['created'])
+            else:
+                return None
+        except:
             return None
 
     def authenticate(self, obj, password):
@@ -96,13 +105,15 @@ class UserManager(Manager):
         return db.query(UserManager.COUNT_OBJECT_QUERY).next()['COUNT(*)']
 
 class User(Model):
+    # @lazy_property
     users = UserManager()
+
     def __init__(self, username, password, admin, user_id=None, created=None):
         self.id = user_id
         self.username = username
         self.password = password
         self.admin = admin
-        self.created = None
+        self.created = created
 
     def __repr__(self):
         return '<User id: {0}, username: {1}, password: {2}, admin: {3}, created: {4}>'.format(self.id, self.username, self.password, self.admin, self.created)
@@ -118,7 +129,7 @@ class User(Model):
         return User.users.authenticate(self, password)
 
     def delete(self):
-        User.users.delete_object(self)
+        return User.users.delete_object(self)
 
     def database_name(self):
         return 'default'

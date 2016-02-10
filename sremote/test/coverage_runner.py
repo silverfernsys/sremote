@@ -21,10 +21,10 @@ def main():
         '*tablib*',
         ])
     cov.start()
-
+    
+    # from app_test import ApplicationTest
     from database_test import DatabaseTest
     from db_test import DbTest
-    # from app_test import ApplicationTest
     from http_test import HTTPTestCase
     from procinfo_test import ProcInfoTest
     from user_test import UserTest

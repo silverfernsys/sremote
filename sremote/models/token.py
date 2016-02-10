@@ -22,7 +22,8 @@ class TokenManager(Manager):
 
     def create_table(self):
         db = DatabaseManager.instance(TokenManager.DATABASE_NAME)
-        db.query(TokenManager.CREATE_TABLE_QUERY)
+        if not db.table_exists('token'):
+            db.query(TokenManager.CREATE_TABLE_QUERY)
 
     def drop_table(self):
         db = DatabaseManager.instance(TokenManager.DATABASE_NAME)
@@ -30,16 +31,19 @@ class TokenManager(Manager):
 
     def create_object(self, obj):
         db = DatabaseManager.instance(TokenManager.DATABASE_NAME)
-        if obj.user.id is None:
-            raise ValueError('User.id is None')
+        # if obj.user.id is None:
+        #     raise ValueError('User.id is None')
         try:
-            query_data = (None, obj.user.id, obj.token, time.time(),)
-            db.query(TokenManager.CREATE_OBJECT_QUERY, params=query_data)
-            token_data = db.query(TokenManager.GET_OBJECT_QUERY, (obj.token,)).next()
-            obj.id = token_data['id']
-            obj.created = token_data['created']
-        except Exception as e:
-            raise ValueError('token for this user already exists')
+            if not self.get_token_for_user(obj.user):
+                query_data = (None, obj.user.id, obj.token, time.time(),)
+                db.query(TokenManager.CREATE_OBJECT_QUERY, params=query_data)
+                token_data = db.query(TokenManager.GET_OBJECT_QUERY, (obj.token,)).next()
+                obj.id = token_data['id']
+                obj.created = token_data['created']
+            else:
+                raise ValueError('token for this user already exists')
+        except ValueError as e:
+            raise e
 
     def delete_object(self, obj):
         if obj.id:
@@ -50,10 +54,13 @@ class TokenManager(Manager):
 
     def get_token_for_user(self, user):
         if user.id:
-            db = DatabaseManager.instance(TokenManager.DATABASE_NAME)
-            query = 'SELECT * FROM token WHERE userid=?;'
-            token_data = db.query(query, (user.id,)).next()
-            return Token(user=user, token_id=token_data['id'], token=token_data['token'], created=token_data['created'])
+            try:
+                db = DatabaseManager.instance(TokenManager.DATABASE_NAME)
+                query = 'SELECT * FROM token WHERE userid=?;'
+                token_data = db.query(query, (user.id,)).next()
+                return Token(user=user, token_id=token_data['id'], token=token_data['token'], created=token_data['created'])
+            except:
+                return None
         else:
             raise ValueError('User has no id.')
 
