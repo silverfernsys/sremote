@@ -28,7 +28,13 @@ class TokenTest(unittest.TestCase):
 
         token_0 = Token(user_0)
         token_0.save()
-        token_0.save()
+        
+        print(Token.tokens.all())
+
+        with self.assertRaises(ValueError):
+            token_0.save()
+
+
         self.assertEqual(token_0.id, 1, 'id is 1')
 
         token_0_1 = Token.tokens.get_token_for_user(user_0)
@@ -47,6 +53,8 @@ class TokenTest(unittest.TestCase):
             token_2.save()
 
         self.assertEqual(Token.tokens.count(), 2, 'still 2 tokens saved')
+        self.assertEqual(len(Token.tokens.all()), 2, 'len of all is 2.')
+        # all_tokens = Token.tokens.all()
 
         token_1.delete()
         self.assertEqual(token_1.id, None, 'token has no id')
@@ -54,3 +62,5 @@ class TokenTest(unittest.TestCase):
         self.assertEqual(Token.tokens.count(), 1, '1 token saved')
         token_1.delete()
         self.assertEqual(Token.tokens.count(), 1, 'still 1 token saved')
+
+

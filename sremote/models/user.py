@@ -27,12 +27,8 @@ class UserManager(Manager):
 
     def create_object(self, obj):
         db = DatabaseManager.instance(UserManager.DATABASE_NAME)
-        if obj.admin:
-            admin = 1
-        else:
-            admin = 0
         try:
-            db.query(UserManager.CREATE_OBJECT_QUERY, (None, obj.username, obj.password, admin, time.time(),))
+            db.query(UserManager.CREATE_OBJECT_QUERY, (None, obj.username, obj.password, int(obj.admin), time.time(),))
             user_data = db.query(UserManager.GET_OBJECT_QUERY, (obj.username,)).next()
             obj.id = user_data['id']
             obj.created = user_data['created']
@@ -49,21 +45,36 @@ class UserManager(Manager):
 
     def update_object(self, obj):
         if obj.id:
-            if obj.admin:
-                admin = 1
-            else:
-                admin = 0
             try:
                 db = DatabaseManager.instance(UserManager.DATABASE_NAME)
-                db.query(UserManager.UPDATE_OBJECT_QUERY, (obj.username, obj.password, admin, obj.id,))
+                db.query(UserManager.UPDATE_OBJECT_QUERY, (obj.username, obj.password, int(obj.admin), obj.id,))
             except:
                 raise ValueError('User with id does not exist.')
 
     def get(self, **kwargs):
-        pass
+        db = DatabaseManager.instance(UserManager.DATABASE_NAME)
+        if 'id' in kwargs and 'username' in kwargs:
+            data = db.query('SELECT * FROM user WHERE id=? AND username=?;', (kwargs['id'], kwargs['username'],)).next()
+        elif 'id' in kwargs:
+            data = db.query('SELECT * FROM user WHERE id=?;', (kwargs['id'],)).next()
+        elif 'username' in kwargs:
+            data = db.query('SELECT * FROM user WHERE username=?;', (kwargs['username'],)).next()
+        else:
+            raise ValueError("Missing 'id' or 'username' kwargs.")
+
+        if data:
+            return User(data['username'], None, bool(data['admin']), data['id'], data['created'])
+        else:
+            return None
 
     def all(self):
-        pass
+        db = DatabaseManager.instance(UserManager.DATABASE_NAME)
+        results = []
+
+        for data in db.query('SELECT * FROM user;'):
+            results.append(User(data['username'], None, bool(data['admin']), data['id'], data['created']))
+
+        return results
 
     def count(self):
         db = DatabaseManager.instance(UserManager.DATABASE_NAME)
@@ -77,6 +88,9 @@ class User(Model):
         self.password = password
         self.admin = admin
         self.created = None
+
+    def __repr__(self):
+        return '<User {0}, id: {1}, username: {2}, password: {3}, admin: {4}, created: {5}>'.format(id(self), self.id, self.username, self.password, self.admin, self.created)
 
     def save(self):
         if self.id:

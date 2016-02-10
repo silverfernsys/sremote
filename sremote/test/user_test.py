@@ -39,9 +39,35 @@ class UserTest(unittest.TestCase):
         self.assertEqual(select_result['username'], 'jill')
         self.assertEqual(select_result['admin'], 0)
 
+        # Now test the UserManager.get() method:
+        user_0_1 = User.users.get(id=user_0.id)
+        user_0_2 = User.users.get(username=user_0.username)
+        user_0_3 = User.users.get(id=user_0.id, username=user_0.username)
+        self.assertEqual(user_0.username, user_0_1.username, 'usernames equal')
+        self.assertEqual(user_0_1.username, user_0_2.username, 'usernames equal')
+        self.assertEqual(user_0_1.username, user_0_3.username, 'usernames equal')
+
+        self.assertEqual(user_0.id, user_0_1.id, 'ids equal')
+        self.assertEqual(user_0_1.id, user_0_2.id, 'ids equal')
+        self.assertEqual(user_0_1.id, user_0_3.id, 'ids equal')
+
+        self.assertEqual(user_0.admin, user_0_1.admin, 'admin equal')
+        self.assertEqual(user_0_1.admin, user_0_2.admin, 'admin equal')
+        self.assertEqual(user_0_1.admin, user_0_3.admin, 'admin equal')
+
         # Now delete the object
         user_0.delete()
         self.assertEqual(User.users.count(), 0, 'No more users in database.')
         self.assertEqual(user_0.id, None, 'id is None')
         self.assertEqual(user_0.created, None, 'created is None')
+
+        creation_count = 10
+        for i in range(creation_count):
+            user = User('user%s' % i, 'asdf', True)
+            user.save()
+
+        self.assertEqual(User.users.count(), creation_count, 'count() == creation_count')
+
+        all_users = User.users.all()
+        self.assertEqual(creation_count, len(all_users), 'len == creation_count')
         

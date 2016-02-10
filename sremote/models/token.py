@@ -3,6 +3,7 @@ import binascii
 import os
 import time
 from model import Manager, Model
+from user import User 
 from database import Database, DatabaseManager
 
 class TokenManager(Manager):
@@ -12,7 +13,7 @@ class TokenManager(Manager):
     CREATE_OBJECT_QUERY = """INSERT INTO token VALUES (?,?,?,?);"""
     DELETE_OBJECT_QUERY = """DELETE FROM token WHERE id=?;"""
     UPDATE_OBJECT_QUERY = ''
-    GET_OBJECT_QUERY = 'SELECT * FROM token WHERE userid=?;'
+    GET_OBJECT_QUERY = 'SELECT * FROM token WHERE token=?;'
     COUNT_OBJECT_QUERY = 'SELECT COUNT(*) FROM token;'
     DATABASE_NAME = 'default'
 
@@ -32,12 +33,14 @@ class TokenManager(Manager):
         if obj.user.id is None:
             raise ValueError('User.id is None')
         try:
-            db.query(TokenManager.CREATE_OBJECT_QUERY, (None, obj.user.id, obj.token, time.time(),))
-            token_data = db.query(TokenManager.GET_OBJECT_QUERY, (obj.user.id,)).next()
+            query_data = (None, obj.user.id, obj.token, time.time(),)
+            db.query(TokenManager.CREATE_OBJECT_QUERY, params=query_data)
+            token_data = db.query(TokenManager.GET_OBJECT_QUERY, (obj.token,)).next()
             obj.id = token_data['id']
             obj.created = token_data['created']
         except Exception as e:
-            raise ValueError('token for this user already exists.')
+            print('Exception: %s' % e)
+            raise ValueError('token for this user already exists')
 
     def delete_object(self, obj):
         if obj.id:
@@ -49,16 +52,55 @@ class TokenManager(Manager):
     def get_token_for_user(self, user):
         if user.id:
             db = DatabaseManager.instance(TokenManager.DATABASE_NAME)
-            token_data = db.query(TokenManager.GET_OBJECT_QUERY, (user.id,)).next()
+            query = 'SELECT * FROM token WHERE userid=?;'
+            token_data = db.query(query, (user.id,)).next()
             return Token(user=user, token_id=token_data['id'], token=token_data['token'], created=token_data['created'])
         else:
             raise ValueError('User has no id.')
 
     def get(self, **kwargs):
-        pass
-        
+        if 'token' in kwargs:
+            join = """
+            SELECT user.id AS user_id,
+            user.username,
+            user.admin,
+            user.created AS user_created,
+            token.id AS token_id,
+            token.token,
+            token.created AS token_created
+            FROM user INNER JOIN token ON token.userid = user.id WHERE token.token=?;
+            """
+            db = DatabaseManager.instance(TokenManager.DATABASE_NAME)
+            try:
+                data = db.query(join, (kwargs['token'],)).next()
+                user = User(data['username'], None, bool(data['admin']), data['user_id'], data['user_created'])
+                token = Token(user, data['token_id'], data['token'], data['token_created'])
+                return token
+            except:
+                return None
+        else:
+            raise ValueError("Expecting 'token' in arguments.")
+
     def all(self):
-        pass
+        join = """
+        SELECT user.id AS user_id,
+        user.username,
+        user.admin,
+        user.created AS user_created,
+        token.id AS token_id,
+        token.token,
+        token.created AS token_created
+        FROM user INNER JOIN token ON token.userid = user.id ORDER BY user.username, token.created;
+        """
+        results = []
+
+        db = DatabaseManager.instance(TokenManager.DATABASE_NAME)
+        for data in db.query(join):
+            user = User(data['username'], None, bool(data['admin']), data['user_id'], data['user_created'])
+            token = Token(user, data['token_id'], data['token'], data['token_created'])
+            results.append(token)
+
+        return results
 
     def update_object(self, obj):
         pass
@@ -79,6 +121,9 @@ class Token(Model):
         else:
             self.token = token
         self.created = created
+
+    def __repr__(self):
+        return '<Token {0}, id: {1}, user: {2}, token: {3}, created: {4}>'.format(id(self), self.id, self.user, self.token, self.created)
 
     def save(self):
         if not self.id:
