@@ -1,0 +1,48 @@
+#!/usr/bin/env python
+import unittest
+import time
+from sremote.models.database import Database, DatabaseManager
+
+class TokenTest(unittest.TestCase):
+    def setUp(self):
+    	DatabaseManager.add('default', ':memory:')
+
+    def tearDown(self):
+        DatabaseManager.remove('default')
+
+    def test_token(self):
+    	from sremote.models.user import User, UserManager
+        # The reason we're creating a new UserManager() here is because
+        # there was a previous UserManager() instance created in another
+        # test that was connected to a different database. So, we create
+        # a new UserManager() that connects to the database we've created
+        # in this test.
+        User.users = UserManager()
+        from sremote.models.token import Token
+
+    	user_0 = User('jim', 'asdf', True)
+    	user_0.save()
+
+        user_1 = User('jane', 'qwer', False)
+        user_1.save()
+
+        token_0 = Token(user_0)
+        token_0.save()
+        token_0.save()
+
+        token_1 = Token(user_1)
+        token_1.save()
+        self.assertEqual(Token.tokens.count(), 2, '2 tokens saved')
+
+        token_2 = Token(user_0)
+        with self.assertRaises(ValueError):
+            token_2.save()
+
+        self.assertEqual(Token.tokens.count(), 2, 'still 2 tokens saved')
+
+        token_1.delete()
+        self.assertEqual(token_1.id, None, 'token has no id')
+        self.assertEqual(token_1.created, None, 'token has no created')
+        self.assertEqual(Token.tokens.count(), 1, '1 token saved')
+        token_1.delete()
+        self.assertEqual(Token.tokens.count(), 1, 'still 1 token saved')

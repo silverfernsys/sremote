@@ -63,7 +63,7 @@ class UserManager(Manager):
         db = DatabaseManager.instance(UserManager.DATABASE_NAME)
         return db.query(UserManager.COUNT_OBJECT_QUERY).next()['COUNT(*)']
 
-class User():
+class User(Model):
     users = UserManager()
     def __init__(self, username, password, admin, user_id=None, created=None):
         self.id = user_id
@@ -82,3 +82,5 @@ class User():
     def delete(self):
         User.users.delete_object(self)
 
+    def database_name(self):
+        return 'default'

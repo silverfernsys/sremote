@@ -27,17 +27,19 @@ def main():
     from http_test import HTTPTestCase
     from procinfo_test import ProcInfoTest
     from user_test import UserTest
+    from token_test import TokenTest
     from ws_test import WebSocketTestCase
     from unittest import TestLoader, TextTestRunner, TestSuite
 
     loader = TestLoader()
     suite = TestSuite((
-        # loader.loadTestsFromTestCase(ProcInfoTest),
-        # loader.loadTestsFromTestCase(DbTest),
-        # loader.loadTestsFromTestCase(DatabaseTest),
+        loader.loadTestsFromTestCase(ProcInfoTest),
+        loader.loadTestsFromTestCase(DbTest),
+        loader.loadTestsFromTestCase(DatabaseTest),
         loader.loadTestsFromTestCase(UserTest),
-        # loader.loadTestsFromTestCase(HTTPTestCase),
-        # loader.loadTestsFromTestCase(WebSocketTestCase),
+        loader.loadTestsFromTestCase(TokenTest),
+        loader.loadTestsFromTestCase(HTTPTestCase),
+        loader.loadTestsFromTestCase(WebSocketTestCase),
         # loader.loadTestsFromTestCase(ApplicationTest),
         ))
 

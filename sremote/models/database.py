@@ -131,7 +131,7 @@ class Database(object):
         self.db.commit()
 
         # Row-by-row result generator.
-        row_gen = ({k:r[k] for k in r.keys() } for r in c)
+        row_gen = ({k:r[k] for k in r.keys() } for r in c.fetchall())
         results = ResultSet(row_gen)
 
         # Fetch all results if desired.
