@@ -158,36 +158,46 @@ class Application():
         self._start(args)
         from models.token import Token
         print("%s%sCreated" % ("Username".ljust(40), "Token".ljust(42)))
-        for token in Token.tokens.all():
-            print("%s%s%s" % (token.user.username.ljust(40), token.token.ljust(42),
-                datetime.fromtimestamp(token.created).strftime('%d-%m-%Y %H:%M:%S')))
+        try:
+            # We need to put this in a try block because it's possible that the users
+            # table won't exist if there hasn't been a user created. The 'all()' function
+            # relies on a join query with users.
+
+            # This will be fixed once I implement migrations
+            for token in Token.tokens().all():
+                print("%s%s%s" % (token.user.username.ljust(40), token.token.ljust(42),
+                    datetime.fromtimestamp(token.created).strftime('%d-%m-%Y %H:%M:%S')))
+        except:
+            pass
 
     def createToken(self, args):
         self._start(args)
+        # Do a check to see if any admins exist before proceeding.
         print('Create token: please authenticate...')
         from models.user import User
         from models.token import Token
         while True:
             admin_username = raw_input('Enter admin username: ')
             admin_password = getpass.getpass('Enter admin password: ')
-            if not User.users.get(username=admin_username).admin:
+            if not User.users().get(username=admin_username).admin:
                 print('Please sign in using administrator credentials.')
-            elif not User.users.get(username=admin_username).authenticate(admin_password):
+            elif not User.users().get(username=admin_username).authenticate(admin_password):
                 print("Username/password don't match.")
             else:
                 break
 
         username = raw_input('Enter username to create a token for: ')
-        user = User.users.get(username=username)
+        user = User.users().get(username=username)
         if user:
             try:
                 token = Token(user=user)
                 token.save()
-                print('Token %s created for %s' % (token.token, username))
-            except:
-                sys.exit('A token already exists for %s. Doing nothing.' % username)
+                print(str('Token %s created for %s' % (token.token, username)))
+            except Exception as e:
+                print("EXCEPTION **** %s" % e)
+                print('A token already exists for %s. Doing nothing.' % username)
         else:
-            sys.exit('A user with username %s does not exist.' % username)
+            print('A user with username %s does not exist.' % username)
 
     def deleteToken(self, args):
         self._start(args)
@@ -197,24 +207,24 @@ class Application():
         while True:
             admin_username = raw_input('Enter admin username: ')
             admin_password = getpass.getpass('Enter admin password: ')
-            if not User.users.get(username=admin_username).admin: #Db.instance().is_admin(admin_username):
+            if not User.users().get(username=admin_username).admin: #Db.instance().is_admin(admin_username):
                 print('Please sign in using administrator credentials.')
-            elif not User.users.get(username=admin_username).authenticate(admin_password): #Db.instance().authenticate_user(admin_username, admin_password):
+            elif not User.users().get(username=admin_username).authenticate(admin_password): #Db.instance().authenticate_user(admin_username, admin_password):
                 print("Username/password don't match.")
             else:
                 break
 
         username = raw_input('Enter username for token to delete: ')
-        user = User.users.get(username=username)
+        user = User.users().get(username=username)
         if user:
-            token = Token.tokens.get_token_for_user(user=user)
+            token = Token.tokens().get_token_for_user(user=user)
             if token:
                 token.delete()
                 print('Deleted token belonging to %s.' % username)
             else:
-                sys.exit('%s has no tokens to delete.' % username)
+                print('%s has no tokens to delete.' % username)
         else:
-            sys.exit('%s has no tokens to delete.' % username)
+            print('%s has no tokens to delete.' % username)
 
     def runServer(self, args):
         self._start(args)

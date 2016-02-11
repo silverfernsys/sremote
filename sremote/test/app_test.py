@@ -127,8 +127,8 @@ class ApplicationTest(unittest.TestCase):
         user_4.save()
 
         # I hate this hack!!!!
-        User._users = None
-        Token._tokens = None
+        # User._users = None
+        # Token._tokens = None
         temp_stdout = io.BytesIO()
         sys.stdout = temp_stdout
         self.app.listUsers(self.args)
@@ -140,17 +140,60 @@ class ApplicationTest(unittest.TestCase):
     @mock.patch('getpass.getpass')
     @mock.patch('__builtin__.raw_input')
     def test_create_token(self, getuser, getpassword):
-        pass
+        # I hate this hack!!!!
+        User._users = None
+        Token._tokens = None
+        
+        getuser.side_effect = ('jane@example.com', 'jill@example.com',)
+        getpassword.side_effect = ('asdfasdf',)
+
+        user_0 = User('jane@example.com', 'asdfasdf', True)
+        user_0.save()
+        user_1 = User('jill@example.com', 'qwerqwer', False)
+        user_1.save()
+
+        temp_stdout = io.BytesIO()
+        sys.stdout = temp_stdout
+        self.app.createToken(self.args)
+        sys.stdout = sys.__stdout__
+        temp_stdout.seek(0)
+        self.assertTrue('Create token: please authenticate...' in temp_stdout.readline())
+        self.assertTrue('created for jill@example.com' in temp_stdout.readline())
+
 
     @mock.patch('getpass.getpass')
     @mock.patch('__builtin__.raw_input')
     def test_delete_token(self, getuser, getpassword):
-        pass
+        # I hate this hack!!!!
+        User._users = None
+        Token._tokens = None
+        
+        getuser.side_effect = ('jane@example.com', 'jill@example.com',)
+        getpassword.side_effect = ('asdfasdf',)
+
+        user_0 = User('jane@example.com', 'asdfasdf', True)
+        user_0.save()
+        user_1 = User('jill@example.com', 'qwerqwer', False)
+        user_1.save()
+
+        temp_stdout = io.BytesIO()
+        sys.stdout = temp_stdout
+        self.app.deleteToken(self.args)
+        sys.stdout = sys.__stdout__
+        temp_stdout.seek(0)
+        self.assertTrue('Delete token: please authenticate...' in temp_stdout.readline())
+        self.assertTrue('jill@example.com has no tokens to delete.' in temp_stdout.readline())
+
 
     @mock.patch('getpass.getpass')
     @mock.patch('__builtin__.raw_input')
     def test_list_tokens(self, getuser, getpassword):
-        pass
+        User._users = None
+        Token._tokens = None
 
-    def test_server(self):
-        pass
+        temp_stdout = io.BytesIO()
+        sys.stdout = temp_stdout
+        self.app.listTokens(self.args)
+        sys.stdout = sys.__stdout__
+        temp_stdout.seek(0)
+        self.assertEqual(len(temp_stdout.readlines()), 1)
