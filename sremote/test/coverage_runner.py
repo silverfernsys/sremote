@@ -25,7 +25,6 @@ def main():
     
     from app_test import ApplicationTest
     from database_test import DatabaseTest
-    from db_test import DbTest
     from http_test import HTTPTestCase
     from procinfo_test import ProcInfoTest
     from user_test import UserTest
@@ -36,7 +35,6 @@ def main():
     loader = TestLoader()
     suite = TestSuite((
         loader.loadTestsFromTestCase(ProcInfoTest),
-        loader.loadTestsFromTestCase(DbTest),
         loader.loadTestsFromTestCase(DatabaseTest),
         loader.loadTestsFromTestCase(UserTest),
         loader.loadTestsFromTestCase(TokenTest),
