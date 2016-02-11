@@ -9,11 +9,13 @@ from models.db import Db
 from models.database import DatabaseManager
 import sys
 import getpass
-# from getpass import getpass
 import ConfigParser
 from setproctitle import setproctitle
 from server import Server
 from datetime import datetime
+
+from models.user import User
+from models.token import Token
 
 class Application():
     # This function combines the configuration data found in config with that
@@ -88,7 +90,6 @@ class Application():
 
     def createUser(self, args):
         self._start(args)
-        from models.user import User
 
         while True:
             username = raw_input('Enter email address: ')
@@ -120,7 +121,6 @@ class Application():
 
     def deleteUser(self, args):
         self._start(args)
-        from models.user import User
 
         print('Delete user: please authenticate...')
         while True:
@@ -143,7 +143,7 @@ class Application():
 
     def listUsers(self, args):
         self._start(args)
-        from models.user import User
+
         print("%s%sCreated" % ("Username".ljust(70), "Admin".ljust(20)))
         for user in User.users().all():
             if user.admin:
@@ -156,7 +156,7 @@ class Application():
 
     def listTokens(self, args):
         self._start(args)
-        from models.token import Token
+
         print("%s%sCreated" % ("Username".ljust(40), "Token".ljust(42)))
         try:
             # We need to put this in a try block because it's possible that the users
@@ -174,8 +174,7 @@ class Application():
         self._start(args)
         # Do a check to see if any admins exist before proceeding.
         print('Create token: please authenticate...')
-        from models.user import User
-        from models.token import Token
+        
         while True:
             admin_username = raw_input('Enter admin username: ')
             admin_password = getpass.getpass('Enter admin password: ')
@@ -202,8 +201,7 @@ class Application():
     def deleteToken(self, args):
         self._start(args)
         print('Delete token: please authenticate...')
-        from models.user import User
-        from models.token import Token
+        
         while True:
             admin_username = raw_input('Enter admin username: ')
             admin_password = getpass.getpass('Enter admin password: ')
@@ -226,8 +224,9 @@ class Application():
         else:
             print('%s has no tokens to delete.' % username)
 
-    def runServer(self, args):
+    def runServer(self, args):  # pragma: no cover
         self._start(args)
+        setproctitle('sremote')
         logging.basicConfig(filename=self.log_file, format='%(asctime)s::%(levelname)s::%(name)s::%(message)s', level=self.log_level_num)
         logger = logging.getLogger('SupervisorRemote')
         logger.info('Loading configuration from %s' % self.config_path)
@@ -245,3 +244,5 @@ class Application():
                     max_wait_seconds_before_shutdown=self.max_wait_seconds_before_shutdown,
                     tick=self.tick,
                     send_update_tick=self.send_update_tick)
+
+        return server

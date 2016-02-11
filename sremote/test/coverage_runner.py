@@ -20,6 +20,7 @@ def main():
         '*pkg_resources*',
         '*tablib*',
         ])
+
     cov.start()
     
     from app_test import ApplicationTest

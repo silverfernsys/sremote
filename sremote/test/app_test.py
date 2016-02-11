@@ -8,6 +8,8 @@ import ConfigParser
 import shutil
 import mock
 import sys
+import threading
+from time import sleep
 from sremote.app import Application
 from sremote.models.user import User
 from sremote.models.token import Token
@@ -16,10 +18,9 @@ from sremote.models.database import DatabaseManager
 class ApplicationTest(unittest.TestCase):
     def setUp(self):
         # Create a temporary directory for writing the config file to
-        # as well as for creating testing databases in.
+        # as well as for creating testing databases.
         self.temp_dir = tempfile.mkdtemp()
-        # print('ApplicationTest::temp_dir: %s' % self.temp_dir)
-        
+
         # Create a config file programmatically.
         config = ConfigParser.RawConfigParser()
         config.add_section('sremote')
@@ -47,11 +48,6 @@ class ApplicationTest(unittest.TestCase):
         # from sremote.models.database import DatabaseManager
         DatabaseManager.add('default', os.path.join(self.temp_dir, 'db.sqlite'))
 
-        # from sremote.models.user import User, UserManager
-        # from sremote.models.token import Token, TokenManager
-        # User.users = UserManager()
-        # Token.tokens = TokenManager()
-
     def tearDown(self):
         self.app = None
         shutil.rmtree(self.temp_dir)
@@ -68,8 +64,6 @@ class ApplicationTest(unittest.TestCase):
         # Redirect sys.stdout to temp_stdout so that we can read
         # the terminal output from 'createUser' and ensure that
         # it matches our expectations. --Mr. Verbosity
-        # self.app.listUsers(self.args)
-
         temp_stdout = io.BytesIO()
         sys.stdout = temp_stdout
         self.app.createUser(self.args)
@@ -96,7 +90,6 @@ class ApplicationTest(unittest.TestCase):
         user_4 = User('marc@example.com', 'wertwert', True)
         user_4.save()
 
-        # print(User.users().all())
         # deleteUser will create a new database connection, so best to null out the current
         # one first! This will force User.user() to access the new default database.
         # I hate this hack!!!!
@@ -126,9 +119,6 @@ class ApplicationTest(unittest.TestCase):
         user_4 = User('marc@example.com', 'wertwert', True)
         user_4.save()
 
-        # I hate this hack!!!!
-        # User._users = None
-        # Token._tokens = None
         temp_stdout = io.BytesIO()
         sys.stdout = temp_stdout
         self.app.listUsers(self.args)
@@ -140,7 +130,6 @@ class ApplicationTest(unittest.TestCase):
     @mock.patch('getpass.getpass')
     @mock.patch('__builtin__.raw_input')
     def test_create_token(self, getuser, getpassword):
-        # I hate this hack!!!!
         User._users = None
         Token._tokens = None
         
@@ -164,7 +153,6 @@ class ApplicationTest(unittest.TestCase):
     @mock.patch('getpass.getpass')
     @mock.patch('__builtin__.raw_input')
     def test_delete_token(self, getuser, getpassword):
-        # I hate this hack!!!!
         User._users = None
         Token._tokens = None
         
