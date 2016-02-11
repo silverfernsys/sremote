@@ -102,7 +102,7 @@ class UserManager(Manager):
 
     def count(self):
         db = DatabaseManager.instance(UserManager.DATABASE_NAME)
-        return db.query(UserManager.COUNT_OBJECT_QUERY).next()['COUNT(*)']
+        return db.query(UserManager.COUNT_OBJECT_QUERY).nextresult()['COUNT(*)']
 
 class User(Model):
     _users = None

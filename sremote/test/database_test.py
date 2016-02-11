@@ -40,16 +40,16 @@ class DatabaseTest(unittest.TestCase):
         for value in user_values:
             insert_result = self.db.query(create_user_query, value)
         count_result = self.db.query('SELECT COUNT(*) FROM user;')
-        self.assertEqual(count_result.next()['COUNT(*)'], 3, '3 users in table')
+        self.assertEqual(count_result.nextresult()['COUNT(*)'], 3, '3 users in table')
 
         # Delete a user and count the resulting entries
         delete_user_query = 'DELETE FROM user WHERE username=?;'
         self.db.query(delete_user_query, ('john',))
-        self.assertEqual(self.db.query('SELECT COUNT(*) FROM user;').next()['COUNT(*)'], 2, '2 users in table')
+        self.assertEqual(self.db.query('SELECT COUNT(*) FROM user;').nextresult()['COUNT(*)'], 2, '2 users in table')
 
         # Select a user and inspect it's values
         select_user_query = 'SELECT * FROM user WHERE username=?;'
-        select_result = self.db.query(select_user_query, ('jill',)).next()
+        select_result = self.db.query(select_user_query, ('jill',)).nextresult()
         self.assertEqual(select_result['username'], 'jill')
         self.assertEqual(select_result['admin'], 1)
         self.assertEqual(select_result['password'], 'asdf')
@@ -58,7 +58,7 @@ class DatabaseTest(unittest.TestCase):
         update_user_query = 'UPDATE user SET username=?, admin=? WHERE id=?;'
         self.db.query(update_user_query, ('jane', 0, 2))
         select_user_query = 'SELECT * FROM user WHERE username=?;'
-        select_result = self.db.query(select_user_query, ('jane',)).next()
+        select_result = self.db.query(select_user_query, ('jane',)).nextresult()
         self.assertEqual(select_result['username'], 'jane')
         self.assertEqual(select_result['admin'], 0)
         self.assertEqual(select_result['password'], 'asdf')

@@ -35,7 +35,7 @@ class TokenManager(Manager):
             if not self.get_token_for_user(obj.user):
                 query_data = (None, obj.user.id, obj.token, time.time(),)
                 db.query(TokenManager.CREATE_OBJECT_QUERY, params=query_data)
-                token_data = db.query(TokenManager.GET_OBJECT_QUERY, (obj.token,)).next()
+                token_data = db.query(TokenManager.GET_OBJECT_QUERY, (obj.token,)).nextresult()
                 obj.id = token_data['id']
                 obj.created = token_data['created']
             else:
@@ -55,7 +55,7 @@ class TokenManager(Manager):
             try:
                 db = DatabaseManager.instance(TokenManager.DATABASE_NAME)
                 query = 'SELECT * FROM token WHERE userid=?;'
-                token_data = db.query(query, (user.id,)).next()
+                token_data = db.query(query, (user.id,)).nextresult()
                 return Token(user=user, token_id=token_data['id'], token=token_data['token'], created=token_data['created'])
             except:
                 return None
@@ -76,7 +76,7 @@ class TokenManager(Manager):
             """
             db = DatabaseManager.instance(TokenManager.DATABASE_NAME)
             try:
-                data = db.query(join, (kwargs['token'],)).next()
+                data = db.query(join, (kwargs['token'],)).nextresult()
                 user = User(data['username'], None, bool(data['admin']), data['user_id'], data['user_created'])
                 token = Token(user, data['token_id'], data['token'], data['token_created'])
                 return token
@@ -111,7 +111,7 @@ class TokenManager(Manager):
 
     def count(self):
         db = DatabaseManager.instance(TokenManager.DATABASE_NAME)
-        return db.query(TokenManager.COUNT_OBJECT_QUERY, params=None, fetchall=False).next()['COUNT(*)']
+        return db.query(TokenManager.COUNT_OBJECT_QUERY, params=None, fetchall=False).nextresult()['COUNT(*)']
 
 class Token(Model):
     _tokens = None
@@ -132,8 +132,8 @@ class Token(Model):
     @classmethod
     def tokens(self):
         if Token._tokens is None:
-            _tokens = TokenManager()
-        return _tokens
+            Token._tokens = TokenManager()
+        return Token._tokens
 
     def __repr__(self):
         return '<Token id: {0}, user: {1}, token: {2}, created: {3}>'.format(self.id, self.user, self.token, self.created)

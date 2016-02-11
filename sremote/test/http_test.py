@@ -10,19 +10,18 @@ from tornado.testing import AsyncHTTPTestCase
 from tornado.web import Application, RequestHandler, url
 
 from sremote.http import HTTPVersionHandler, HTTPStatusHandler, HTTPTokenHandler
-from sremote.models.database import DatabaseManager 
 from sremote.procinfo import ProcInfo
+from sremote.models.database import DatabaseManager
+from sremote.models.user import User, UserManager
+from sremote.models.token import Token, TokenManager
 
 class HTTPTestCase(AsyncHTTPTestCase):
     def setUp(self):
         super(HTTPTestCase, self).setUp()
         DatabaseManager.add('default', ':memory:')
 
-        from sremote.models.user import User, UserManager
-        from sremote.models.token import Token, TokenManager
-
-        User.users = UserManager()
-        Token.tokens = TokenManager()
+        User._users = UserManager()
+        Token._tokens = TokenManager()
 
         self.username_0 = 'info@example.com'
         self.password_0 = 'asdfasdf'

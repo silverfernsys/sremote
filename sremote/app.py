@@ -235,9 +235,3 @@ class Application():
                     max_wait_seconds_before_shutdown=self.max_wait_seconds_before_shutdown,
                     tick=self.tick,
                     send_update_tick=self.send_update_tick)
-
-def main():
-    print("app.py main()")
-
-if __name__ == "__main__":
-    main()

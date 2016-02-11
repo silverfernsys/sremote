@@ -16,6 +16,8 @@ from tornado.websocket import WebSocketProtocol13
 
 from sremote.ws import WSHandler
 from sremote.models.database import DatabaseManager
+from sremote.models.user import User, UserManager
+from sremote.models.token import Token, TokenManager
 
 class WebSocketTestCase(AsyncHTTPTestCase):
     def setUp(self):
@@ -23,11 +25,9 @@ class WebSocketTestCase(AsyncHTTPTestCase):
 
         DatabaseManager.add('default', ':memory:')
         
-        from sremote.models.user import User, UserManager
-        from sremote.models.token import Token, TokenManager
-
-        User.users = UserManager()
-        Token.tokens = TokenManager()
+        
+        User._users = UserManager()
+        Token._tokens = TokenManager()
 
         self.username_0 = 'info@example.com'
         self.password_0 = 'asdfasdf'

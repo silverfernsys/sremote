@@ -23,9 +23,9 @@ class UserTest(unittest.TestCase):
     	self.assertTrue(user_0.admin)
     	self.assertEqual(user_0.id, None)
     	self.assertEqual(user_0.created, None)
-    	self.assertEqual(User.users.count(), 0, 'No users in database.')
+    	self.assertEqual(User.users().count(), 0, 'No users in database.')
     	user_0.save()
-    	self.assertEqual(User.users.count(), 1, '1 user in database.')
+    	self.assertEqual(User.users().count(), 1, '1 user in database.')
     	self.assertEqual(user_0.id, 1, 'User has id=1.')
     	self.assertLess(user_0.created, time.time(), 'User was created before now.')
     	user_0.username = 'jill'
@@ -35,14 +35,14 @@ class UserTest(unittest.TestCase):
     	# Now drop into sql to ensure that we really saved the object's username
     	db = DatabaseManager.instance('default')
     	select_user_query = 'SELECT * FROM user WHERE id=?;'
-        select_result = db.query(select_user_query, (user_0.id,)).next()
+        select_result = db.query(select_user_query, (user_0.id,)).nextresult()
         self.assertEqual(select_result['username'], 'jill')
         self.assertEqual(select_result['admin'], 0)
 
         # Now test the UserManager.get() method:
-        user_0_1 = User.users.get(id=user_0.id)
-        user_0_2 = User.users.get(username=user_0.username)
-        user_0_3 = User.users.get(id=user_0.id, username=user_0.username)
+        user_0_1 = User.users().get(id=user_0.id)
+        user_0_2 = User.users().get(username=user_0.username)
+        user_0_3 = User.users().get(id=user_0.id, username=user_0.username)
         self.assertEqual(user_0.username, user_0_1.username, 'usernames equal')
         self.assertEqual(user_0_1.username, user_0_2.username, 'usernames equal')
         self.assertEqual(user_0_1.username, user_0_3.username, 'usernames equal')
@@ -60,7 +60,7 @@ class UserTest(unittest.TestCase):
 
         # Now delete the object
         user_0.delete()
-        self.assertEqual(User.users.count(), 0, 'No more users in database.')
+        self.assertEqual(User.users().count(), 0, 'No more users in database.')
         self.assertEqual(user_0.id, None, 'id is None')
         self.assertEqual(user_0.created, None, 'created is None')
 
@@ -69,9 +69,9 @@ class UserTest(unittest.TestCase):
             user = User('user%s' % i, 'asdf', True)
             user.save()
 
-        self.assertEqual(User.users.count(), creation_count, 'count() == creation_count')
+        self.assertEqual(User.users().count(), creation_count, 'count() == creation_count')
 
-        all_users = User.users.all()
+        all_users = User.users().all()
         self.assertEqual(creation_count, len(all_users), 'len == creation_count')
 
         user_1 = User('jill', 'qwer', True)
