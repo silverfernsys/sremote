@@ -32,16 +32,17 @@ class ResultSet(object):
         except StopIteration:
             pass
 
-    def next(self):
-        return self.__next__()
-
     def __next__(self):
         try:
             nextrow = next(self._rows)
             self._all_rows.append(nextrow)
             return nextrow
         except StopIteration:
+            print(self._all_rows, next(self._rows))
             raise StopIteration("ResultSet contains no more rows.")
+
+    def nextresult(self):
+        return self.__next__()
 
     @property
     def dataset(self):
@@ -112,7 +113,7 @@ class Database(object):
 
     def table_exists(self, tablename):
         try:
-            self.query(SQLITE_TABLE_QUERY, (tablename,)).next()
+            self.query(SQLITE_TABLE_QUERY, (tablename,)).nextresult()
             return True
         except:
             return False
@@ -128,12 +129,18 @@ class Database(object):
             c.execute(query, params)
         else:
             c.execute(query)
-        self.db.commit()
+        # self.db.commit()
+
+        # if query == 'SELECT * FROM user WHERE username=?;':
+        #     r = c.fetchall()[0]
+        #     print(r)
+        #     print(r.keys())
 
         # Row-by-row result generator.
         row_gen = ({k:r[k] for k in r.keys() } for r in c.fetchall())
+        # row_gen = (r for r in c.fetchall())
         results = ResultSet(row_gen)
-
+        self.db.commit()
         # Fetch all results if desired.
         if fetchall:
             results.all()

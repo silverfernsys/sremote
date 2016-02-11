@@ -114,9 +114,12 @@ class TokenManager(Manager):
         return db.query(TokenManager.COUNT_OBJECT_QUERY, params=None, fetchall=False).next()['COUNT(*)']
 
 class Token(Model):
-    tokens = TokenManager()
+    _tokens = None
 
     def __init__(self, user=None, token_id=None, token=None, created=None):
+        if Token.tokens is None:
+            Token.tokens = UserManager()
+
         self.id = token_id
         self.user = user
 
@@ -126,14 +129,20 @@ class Token(Model):
             self.token = token
         self.created = created
 
+    @classmethod
+    def tokens(self):
+        if Token._tokens is None:
+            _tokens = TokenManager()
+        return _tokens
+
     def __repr__(self):
         return '<Token id: {0}, user: {1}, token: {2}, created: {3}>'.format(self.id, self.user, self.token, self.created)
 
     def save(self):
-        Token.tokens.create_object(self)
+        Token.tokens().create_object(self)
 
     def delete(self):
-        Token.tokens.delete_object(self)
+        Token.tokens().delete_object(self)
 
     def database_name(self):
         return 'default'

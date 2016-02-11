@@ -8,7 +8,8 @@ import os
 from models.db import Db
 from models.database import DatabaseManager
 import sys
-from getpass import getpass
+import getpass
+# from getpass import getpass
 import ConfigParser
 from setproctitle import setproctitle
 from server import Server
@@ -72,7 +73,7 @@ class Application():
         try:
             # print('args.config: %s' % args.config)
             self.config_path = args.config or self._findConfig()
-            print('config_path: %s' % self.config_path)
+            # print('config_path: %s' % self.config_path)
             config = ConfigParser.ConfigParser()
             config.read(self.config_path)
             (self.tick, self.send_update_tick, self.port_number,
@@ -91,10 +92,11 @@ class Application():
 
         while True:
             username = raw_input('Enter email address: ')
-            if User.users.get(username=username):
+            if User.users().get(username=username):
                 print('Username already exists. Please pick another username.')
             else:
                 break
+            print('username: %s' % username)
         while True:
             is_admin = raw_input('Admininstrative user? (y/N): ')
             if (len(is_admin) == 0) or (is_admin.upper() == 'N'):
@@ -104,8 +106,8 @@ class Application():
                 admin = True
                 break
         while True:
-            password_1 = getpass('Enter password: ')
-            password_2 = getpass('Re-enter password: ')
+            password_1 = getpass.getpass('Enter password: ')
+            password_2 = getpass.getpass('Re-enter password: ')
             if password_1 != password_2:
                 print('Passwords do not match.')
             else:
@@ -123,16 +125,17 @@ class Application():
         print('Delete user: please authenticate...')
         while True:
             admin_username = raw_input('Enter admin username: ')
-            admin_password = getpass('Enter admin password: ')
-            if not User.users.get(username=admin_username).admin: #not Db.instance().is_admin(admin_username):
+            admin_password = getpass.getpass('Enter admin password: ')
+            user = User.users().get(username=admin_username)
+            if not user.admin:
                 print('Please sign in using administrator credentials.')
-            elif not User.users.get(username=admin_username).authenticate(admin_password): #not Db.instance().authenticate_user(admin_username, admin_password):
+            elif not user.authenticate(admin_password):
                 print("Username/password don't match.")
             else:
                 break
 
         username_to_delete = raw_input('Enter username to delete: ')
-        if User.users.get(username=username_to_delete).delete():
+        if User.users().get(username=username_to_delete).delete():
             # Db.instance().delete_user(username_to_delete)
             print('Deleted user %s.' % username_to_delete)
         else:
@@ -142,13 +145,14 @@ class Application():
         self._start(args)
         from models.user import User
         print("%s%sCreated" % ("Username".ljust(70), "Admin".ljust(20)))
-        for user in User.users.all():
+        for user in User.users().all():
             if user.admin:
                 admin_str = 'Y'
             else:
                 admin_str = 'N'
             # https://docs.python.org/2/library/datetime.html#strftime-strptime-behavior
-            print("%s%s%s" % (user.username.ljust(70), admin_str.ljust(20), datetime.fromtimestamp(user.created).strftime('%d-%m-%Y %H:%M:%S')))
+            line = "%s%s%s" % (user.username.ljust(70), admin_str.ljust(20), datetime.fromtimestamp(user.created).strftime('%d-%m-%Y %H:%M:%S'))
+            print(str(line))
 
     def listTokens(self, args):
         self._start(args)
@@ -165,7 +169,7 @@ class Application():
         from models.token import Token
         while True:
             admin_username = raw_input('Enter admin username: ')
-            admin_password = getpass('Enter admin password: ')
+            admin_password = getpass.getpass('Enter admin password: ')
             if not User.users.get(username=admin_username).admin:
                 print('Please sign in using administrator credentials.')
             elif not User.users.get(username=admin_username).authenticate(admin_password):
@@ -192,7 +196,7 @@ class Application():
         from models.token import Token
         while True:
             admin_username = raw_input('Enter admin username: ')
-            admin_password = getpass('Enter admin password: ')
+            admin_password = getpass.getpass('Enter admin password: ')
             if not User.users.get(username=admin_username).admin: #Db.instance().is_admin(admin_username):
                 print('Please sign in using administrator credentials.')
             elif not User.users.get(username=admin_username).authenticate(admin_password): #Db.instance().authenticate_user(admin_username, admin_password):

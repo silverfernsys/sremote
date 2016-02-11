@@ -22,7 +22,7 @@ def main():
         ])
     cov.start()
     
-    # from app_test import ApplicationTest
+    from app_test import ApplicationTest
     from database_test import DatabaseTest
     from db_test import DbTest
     from http_test import HTTPTestCase
@@ -34,14 +34,14 @@ def main():
 
     loader = TestLoader()
     suite = TestSuite((
-        loader.loadTestsFromTestCase(ProcInfoTest),
-        loader.loadTestsFromTestCase(DbTest),
-        loader.loadTestsFromTestCase(DatabaseTest),
-        loader.loadTestsFromTestCase(UserTest),
-        loader.loadTestsFromTestCase(TokenTest),
-        loader.loadTestsFromTestCase(HTTPTestCase),
-        loader.loadTestsFromTestCase(WebSocketTestCase),
-        # loader.loadTestsFromTestCase(ApplicationTest),
+        # loader.loadTestsFromTestCase(ProcInfoTest),
+        # loader.loadTestsFromTestCase(DbTest),
+        # loader.loadTestsFromTestCase(DatabaseTest),
+        # loader.loadTestsFromTestCase(UserTest),
+        # loader.loadTestsFromTestCase(TokenTest),
+        # loader.loadTestsFromTestCase(HTTPTestCase),
+        # loader.loadTestsFromTestCase(WebSocketTestCase),
+        loader.loadTestsFromTestCase(ApplicationTest),
         ))
 
     runner = TextTestRunner(verbosity = 2)

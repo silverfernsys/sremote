@@ -32,7 +32,7 @@ class UserManager(Manager):
         try:
             pwd_hash = pwd_context.encrypt(obj.password)
             db.query(UserManager.CREATE_OBJECT_QUERY, (None, obj.username, pwd_hash, int(obj.admin), time.time(),))
-            user_data = db.query(UserManager.GET_OBJECT_QUERY, (obj.username,)).next()
+            user_data = db.query(UserManager.GET_OBJECT_QUERY, (obj.username,)).nextresult()
             obj.id = user_data['id']
             obj.created = user_data['created']
         except Exception as e:
@@ -65,11 +65,11 @@ class UserManager(Manager):
         db = DatabaseManager.instance(UserManager.DATABASE_NAME)
         try:
             if 'id' in kwargs and 'username' in kwargs:
-                data = db.query('SELECT * FROM user WHERE id=? AND username=?;', (kwargs['id'], kwargs['username'],)).next()
+                data = db.query('SELECT * FROM user WHERE id=? AND username=?;', (kwargs['id'], kwargs['username'],)).nextresult()
             elif 'id' in kwargs:
-                data = db.query('SELECT * FROM user WHERE id=?;', (kwargs['id'],)).next()
+                data = db.query('SELECT * FROM user WHERE id=?;', (kwargs['id'],)).nextresult()
             elif 'username' in kwargs:
-                data = db.query('SELECT * FROM user WHERE username=?;', (kwargs['username'],)).next()
+                data = db.query('SELECT * FROM user WHERE username=?;', (kwargs['username'],)).nextresult()
             else:
                 raise ValueError("Missing 'id' or 'username' kwargs.")
 
@@ -77,13 +77,13 @@ class UserManager(Manager):
                 return User(data['username'], None, bool(data['admin']), data['id'], data['created'])
             else:
                 return None
-        except:
+        except Exception as e:
             return None
 
     def authenticate(self, obj, password):
         try:
             db = DatabaseManager.instance(UserManager.DATABASE_NAME)
-            data = db.query(UserManager.GET_OBJECT_QUERY, (obj.username,)).next()
+            data = db.query(UserManager.GET_OBJECT_QUERY, (obj.username,)).nextresult()
             if pwd_context.verify(password, data['password']):
                 return True
             else:
@@ -105,7 +105,7 @@ class UserManager(Manager):
         return db.query(UserManager.COUNT_OBJECT_QUERY).next()['COUNT(*)']
 
 class User(Model):
-    users = UserManager()
+    _users = None
 
     def __init__(self, username, password, admin, user_id=None, created=None):
         self.id = user_id
@@ -114,21 +114,27 @@ class User(Model):
         self.admin = admin
         self.created = created
 
+    @classmethod
+    def users(self):
+        if User._users == None:
+            User._users = UserManager()
+        return User._users
+
     def __repr__(self):
         return '<User id: {0}, username: {1}, password: {2}, admin: {3}, created: {4}>'.format(self.id, self.username, self.password, self.admin, self.created)
 
     def save(self):
         if self.id:
-            User.users.update_object(self)
+            User.users().update_object(self)
         else:
-            User.users.create_object(self)
+            User.users().create_object(self)
             # Now get the id of the newly created object, query it, and get the creation time.
 
     def authenticate(self, password):
-        return User.users.authenticate(self, password)
+        return User.users().authenticate(self, password)
 
     def delete(self):
-        return User.users.delete_object(self)
+        return User.users().delete_object(self)
 
     def database_name(self):
         return 'default'
