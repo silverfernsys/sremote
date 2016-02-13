@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import json
+from socket import gethostname
 import tornado.httpserver
 from procinfo import ProcInfo
 from processupdater import ProcessUpdater
@@ -9,7 +10,8 @@ from models.token import Token
 class HTTPVersionHandler(tornado.web.RequestHandler):
     @tornado.web.addslash
     def get(self):
-        data = {'version': ProcessUpdater.version}
+        data = {'version': ProcessUpdater.version,
+        'hostname': gethostname()}
         self.set_header('Content-Type', 'application/json')
         self.write(json.dumps(data))
 
